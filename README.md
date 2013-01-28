@@ -17,6 +17,16 @@ headers: `build/export/include/`.
 
 library: `build/export/lib/`.
 
+## Test
+
+    make test
+
+or run `struct_test`.
+
+valgrind memory check:
+
+    ctest -T memcheck
+
 # References
 
 [The Practice of Programming (9.1 Formatting Data)](http://www.amazon.com/Practice-Programming-Addison-Wesley-Professional-Computing/dp/020161586X/ref=sr_1_1?ie=UTF8&qid=1359350725&sr=8-1&keywords=practice+of+programming "The Practice of Programming")
