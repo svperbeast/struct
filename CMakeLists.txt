@@ -8,7 +8,9 @@ set (gtest "gtest-1.6.0")
 set (CMAKE_SHARED_LIBRARY_LINK_C_FLAGS)
 set (CMAKE_SHARED_LIBRARY_LINK_CXX_FLAGS)
 
-add_subdirectory (${gtest})
+if (NOT TARGET gtest)
+    add_subdirectory (${gtest})
+endif (NOT TARGET gtest)
 
 include_directories ("${struct_SOURCE_DIR}/include"
                      "${gtest_SOURCE_DIR}/include"
