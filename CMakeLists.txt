@@ -8,12 +8,14 @@ set (gtest "gtest-1.6.0")
 set (CMAKE_SHARED_LIBRARY_LINK_C_FLAGS)
 set (CMAKE_SHARED_LIBRARY_LINK_CXX_FLAGS)
 
-include_directories ("${CMAKE_SOURCE_DIR}/include"
-                     "${CMAKE_SOURCE_DIR}/${gtest}/include"
+add_subdirectory (${gtest})
+
+include_directories ("${struct_SOURCE_DIR}/include"
+                     "${gtest_SOURCE_DIR}/include"
                      )
 
 link_directories ("${CMAKE_BINARY_DIR}/lib"
-                  "${CMAKE_BINARY_DIR}/${gtest}"
+                  "${gtest_BINARY_DIR}"
                   )
 
 add_library (struct SHARED
@@ -30,12 +32,10 @@ set_target_properties (struct PROPERTIES
 
 install (TARGETS struct DESTINATION "${CMAKE_BINARY_DIR}/export/lib")
 install (FILES
-         "${CMAKE_SOURCE_DIR}/include/struct.h"
+         "${struct_SOURCE_DIR}/include/struct.h"
          DESTINATION
          "${CMAKE_BINARY_DIR}/export/include"
          )
-
-add_subdirectory (${gtest})
 
 include (CTest)
 enable_testing ()
