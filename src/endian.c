@@ -11,8 +11,8 @@ int get_endian(void)
 {
 	int i = 0x00000001;
 	if (((char *)&i)[0]) {
-		return LITTLE_ENDIAN;
+		return STRUCT_ENDIAN_LITTLE;
 	} else {
-		return BIG_ENDIAN;
+		return STRUCT_ENDIAN_BIG;
 	}
 }

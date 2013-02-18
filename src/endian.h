@@ -9,9 +9,9 @@
 #define ENDIAN_H_
 
 enum endian {
-	NOT_SET,
-	BIG_ENDIAN,
-	LITTLE_ENDIAN
+	STRUCT_ENDIAN_NOT_SET,
+	STRUCT_ENDIAN_BIG,
+	STRUCT_ENDIAN_LITTLE
 };
 
 extern int get_endian(void);

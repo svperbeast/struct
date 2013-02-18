@@ -15,10 +15,10 @@
 #include <ctype.h>
 #include <errno.h>
 
-static int myendian = NOT_SET;
+static int myendian = STRUCT_ENDIAN_NOT_SET;
 
 #define CHECK_PREREQUISITE() do { \
-	if (NOT_SET == myendian) { \
+	if (STRUCT_ENDIAN_NOT_SET == myendian) { \
 		struct_init(); \
 	} \
 } while (0)
@@ -389,15 +389,15 @@ static int pack_va_list(unsigned char *buf, int offset, const char *fmt,
 			ep = &myendian;
 			break;
 		case '<': /* little-endian */
-			endian = LITTLE_ENDIAN;
+			endian = STRUCT_ENDIAN_LITTLE;
 			ep = &endian;
 			break;
 		case '>': /* big-endian */
-			endian = BIG_ENDIAN;
+			endian = STRUCT_ENDIAN_BIG;
 			ep = &endian;
 			break;
 		case '!': /* network (= big-endian) */
-			endian = BIG_ENDIAN;
+			endian = STRUCT_ENDIAN_BIG;
 			ep = &endian;
 			break;
 		case 'b':
@@ -526,15 +526,15 @@ static int unpack_va_list(unsigned char *buf, int offset, const char *fmt,
 			ep = &myendian;
 			break;
 		case '<': /* little-endian */
-			endian = LITTLE_ENDIAN;
+			endian = STRUCT_ENDIAN_LITTLE;
 			ep = &endian;
 			break;
 		case '>': /* big-endian */
-			endian = BIG_ENDIAN;
+			endian = STRUCT_ENDIAN_BIG;
 			ep = &endian;
 			break;
 		case '!': /* network (= big-endian) */
-			endian = BIG_ENDIAN;
+			endian = STRUCT_ENDIAN_BIG;
 			ep = &endian;
 			break;
 		case 'b':
