@@ -148,6 +148,15 @@ TEST_F(Struct, int16_tPackUnpackingValid)
 	EXPECT_EQ(i, o);
 }
 
+TEST_F(Struct, int16_tNegPackUnpackingValid)
+{
+	int16_t i = -1234;
+	int16_t o;
+	struct_pack(buf, "h", i);
+	struct_unpack(buf, "h", &o);
+	EXPECT_EQ(i, o);
+}
+
 TEST_F(Struct, int16_tMultiPackUnpackingValid)
 {
 	int16_t i = 0x1234;
@@ -218,6 +227,15 @@ TEST_F(Struct, uint16_tMultiPackUnpackingWithOffsetValid)
 TEST_F(Struct, int32_t_i_PackUnpackingValid)
 {
 	int32_t i = 0x12345678;
+	int32_t o;
+	struct_pack(buf, "i", i);
+	struct_unpack(buf, "i", &o);
+	EXPECT_EQ(i, o);
+}
+
+TEST_F(Struct, int32_t_i_NegPackUnpackingValid)
+{
+	int32_t i = -12345678;
 	int32_t o;
 	struct_pack(buf, "i", i);
 	struct_unpack(buf, "i", &o);
@@ -300,6 +318,15 @@ TEST_F(Struct, int32_t_l_PackUnpackingValid)
 	EXPECT_EQ(i, o);
 }
 
+TEST_F(Struct, int32_t_l_NegPackUnpackingValid)
+{
+	int32_t i = -12345678;
+	int32_t o;
+	struct_pack(buf, "l", i);
+	struct_unpack(buf, "l", &o);
+	EXPECT_EQ(i, o);
+}
+
 TEST_F(Struct, int32_t_l_MultiPackUnpackingValid)
 {
 	int32_t i = 0x12345678;
@@ -370,6 +397,15 @@ TEST_F(Struct, uint32_t_L_MultiPackUnpackingWithOffsetValid)
 TEST_F(Struct, int64_tPackUnpackingValid)
 {
 	int64_t i = 0x1234567887654321LL;
+	int64_t o;
+	struct_pack(buf, "q", i);
+	struct_unpack(buf, "q", &o);
+	EXPECT_EQ(i, o);
+}
+
+TEST_F(Struct, int64_tNegPackUnpackingValid)
+{
+	int64_t i = -1234567887654321;
 	int64_t o;
 	struct_pack(buf, "q", i);
 	struct_unpack(buf, "q", &o);
@@ -452,6 +488,15 @@ TEST_F(Struct, floatPackUnpackingValid)
 	EXPECT_DOUBLE_EQ(i, o);
 }
 
+TEST_F(Struct, floatNegPackUnpackingValid)
+{
+	float i = -3.141592;
+	float o;
+	struct_pack(buf, "f", i);
+	struct_unpack(buf, "f", &o);
+	EXPECT_DOUBLE_EQ(i, o);
+}
+
 TEST_F(Struct, floatMultiPackUnpackingValid)
 {
 	float i = 3.141592;
@@ -484,6 +529,15 @@ TEST_F(Struct, floatMultiPackUnpackingWithOffsetValid)
 TEST_F(Struct, doublePackUnpackingValid)
 {
 	double i = 3.141592;
+	double o;
+	struct_pack(buf, "d", i);
+	struct_unpack(buf, "d", &o);
+	EXPECT_DOUBLE_EQ(i, o);
+}
+
+TEST_F(Struct, doubleNegPackUnpackingValid)
+{
+	double i = -3.141592;
 	double o;
 	struct_pack(buf, "d", i);
 	struct_unpack(buf, "d", &o);
@@ -914,8 +968,8 @@ TEST_F(Struct, double_big_MultiPackUnpackingValid)
 {
 	double i = 3.141592;
 	double o1, o2;
-	struct_pack(buf, "2d", i, i);
-	struct_unpack(buf, "2d", &o1, &o2);
+	struct_pack(buf, ">2d", i, i);
+	struct_unpack(buf, ">2d", &o1, &o2);
 	EXPECT_DOUBLE_EQ(i, o1);
 	EXPECT_DOUBLE_EQ(i, o2);
 }

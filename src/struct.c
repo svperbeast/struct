@@ -1,10 +1,3 @@
-/*
- * struct.c
- *
- *  Created on: 2011. 5. 2.
- *      Author: Wonseok
- */
-
 #include "struct.h"
 #include "endian.h"
 
@@ -15,7 +8,17 @@
 #include <ctype.h>
 #include <errno.h>
 
-static int myendian = STRUCT_ENDIAN_NOT_SET;
+// refer to
+// http://beej.us/guide/bgnet/output/html/singlepage/bgnet.html#serialization
+// - Beej's Guide to Network Programming
+//
+// macros for packing floats and doubles:
+#define PACK_IEEE754_16(f) (pack_ieee754((f), 16, 5))
+#define PACK_IEEE754_32(f) (pack_ieee754((f), 32, 8))
+#define PACK_IEEE754_64(f) (pack_ieee754((f), 64, 11))
+#define UNPACK_IEEE754_16(i) (unpack_ieee754((i), 16, 5))
+#define UNPACK_IEEE754_32(i) (unpack_ieee754((i), 32, 8))
+#define UNPACK_IEEE754_64(i) (unpack_ieee754((i), 64, 11))
 
 #define CHECK_PREREQUISITE() do { \
 	if (STRUCT_ENDIAN_NOT_SET == myendian) { \
@@ -37,23 +40,94 @@ static int myendian = STRUCT_ENDIAN_NOT_SET;
 	memset((b), 0, sizeof((b))); \
 } while (0)
 
-typedef union {
-	float f;
-	unsigned char b[sizeof(float)];
-} fsplit_t;
-
-typedef union {
-	double d;
-	unsigned char b[sizeof(double)];
-} dsplit_t;
-
+static int myendian = STRUCT_ENDIAN_NOT_SET;
 
 static void struct_init(void)
 {
 	myendian = get_endian();
 }
 
-static void pack_int16_t(unsigned char **bp, int16_t val, int endian)
+static unsigned long long int pack_ieee754(long double f,
+        unsigned bits, unsigned expbits)
+{
+    long double fnorm;
+    int shift;
+    long long sign;
+    long long exp;
+    long long significand;
+    unsigned int significandbits = bits - expbits - 1; // -1 for sign bit
+
+    if (f == 0.0) {
+        return 0; // get this special case out of the way
+    }
+
+    // check sign and begin normalization
+    if (f < 0) {
+        sign = 1;
+        fnorm = -f;
+    } else {
+        sign = 0;
+        fnorm = f;
+    }
+
+    // get the normalized form of f and track the exponent
+    shift = 0;
+    while (fnorm >= 2.0) {
+        fnorm /= 2.0;
+        shift++;
+    }
+    while (fnorm < 1.0) {
+        fnorm *= 2.0;
+        shift--;
+    }
+    fnorm = fnorm - 1.0;
+
+    // calculate the binary form (non-float) of the significand data
+    significand = fnorm * ((1LL << significandbits) + 0.5f);
+
+    // get the biased exponent
+    exp = shift + ((1 << (expbits - 1)) - 1); // shift + bias
+
+    // return the final answer
+    return (sign << (bits - 1)) | (exp << (bits - expbits - 1)) | significand;
+}
+
+static long double unpack_ieee754(unsigned long long int i,
+        unsigned bits, unsigned expbits)
+{
+    long double result;
+    long long shift;
+    unsigned bias;
+    unsigned significandbits = bits - expbits - 1; // -1 for sign bit
+
+    if (i == 0) {
+        return 0.0;
+    }
+
+    // pull the significand
+    result = (i & ((1LL << significandbits) - 1)); // mask
+    result /= (1LL << significandbits); // convert back to float
+    result += 1.0f; // add the one back on
+
+    // deal with the exponent
+    bias = (1 << (expbits - 1)) - 1;
+    shift = ((i >> significandbits) & ((1LL << expbits) - 1)) - bias;
+    while (shift > 0) {
+        result *= 2.0;
+        shift--;
+    }
+    while (shift < 0) {
+        result /= 2.0;
+        shift++;
+    }
+
+    // sign it
+    result *= ((i >> (bits - 1)) & 1) ? -1.0 : 1.0;
+
+    return result;
+}
+
+static void pack_int16_t(unsigned char **bp, uint16_t val, int endian)
 {
 	if (endian == myendian) {
 		*((*bp)++) = val;
@@ -64,18 +138,7 @@ static void pack_int16_t(unsigned char **bp, int16_t val, int endian)
 	}
 }
 
-static void pack_uint16_t(unsigned char **bp, uint16_t val, int endian)
-{
-	if (endian == myendian) {
-		*((*bp)++) = val;
-		*((*bp)++) = val >> 8;
-	} else {
-		*((*bp)++) = val >> 8;
-		*((*bp)++) = val;
-	}
-}
-
-static void pack_int32_t(unsigned char **bp, int32_t val, int endian)
+static void pack_int32_t(unsigned char **bp, uint32_t val, int endian)
 {
 	if (endian == myendian) {
 		*((*bp)++) = val;
@@ -90,22 +153,7 @@ static void pack_int32_t(unsigned char **bp, int32_t val, int endian)
 	}
 }
 
-static void pack_uint32_t(unsigned char **bp, uint32_t val, int endian)
-{
-	if (endian == myendian) {
-		*((*bp)++) = val;
-		*((*bp)++) = val >> 8;
-		*((*bp)++) = val >> 16;
-		*((*bp)++) = val >> 24;
-	} else {
-		*((*bp)++) = val >> 24;
-		*((*bp)++) = val >> 16;
-		*((*bp)++) = val >> 8;
-		*((*bp)++) = val;
-	}
-}
-
-static void pack_int64_t(unsigned char **bp, int64_t val, int endian)
+static void pack_int64_t(unsigned char **bp, uint64_t val, int endian)
 {
 	if (endian == myendian) {
 		*((*bp)++) = val;
@@ -128,223 +176,146 @@ static void pack_int64_t(unsigned char **bp, int64_t val, int endian)
 	}
 }
 
-static void pack_uint64_t(unsigned char **bp, uint64_t val, int endian)
-{
-	if (endian == myendian) {
-		*((*bp)++) = val;
-		*((*bp)++) = val >> 8;
-		*((*bp)++) = val >> 16;
-		*((*bp)++) = val >> 24;
-		*((*bp)++) = val >> 32;
-		*((*bp)++) = val >> 40;
-		*((*bp)++) = val >> 48;
-		*((*bp)++) = val >> 56;
-	} else {
-		*((*bp)++) = val >> 56;
-		*((*bp)++) = val >> 48;
-		*((*bp)++) = val >> 40;
-		*((*bp)++) = val >> 32;
-		*((*bp)++) = val >> 24;
-		*((*bp)++) = val >> 16;
-		*((*bp)++) = val >> 8;
-		*((*bp)++) = val;
-	}
-}
-
-/*
- * assume that sizeof(float) is 4.
- */
 static void pack_float(unsigned char **bp, float val, int endian)
 {
-	fsplit_t u;
-
-	u.f = val;
-
-	if (endian == myendian) {
-		*((*bp)++) = u.b[3];
-		*((*bp)++) = u.b[2];
-		*((*bp)++) = u.b[1];
-		*((*bp)++) = u.b[0];
-	} else {
-		*((*bp)++) = u.b[0];
-		*((*bp)++) = u.b[1];
-		*((*bp)++) = u.b[2];
-		*((*bp)++) = u.b[3];
-	}
+    uint64_t ieee754_encoded_val = PACK_IEEE754_32(val);
+    pack_int32_t(bp, ieee754_encoded_val, endian);
 }
 
-/*
- * assume that sizeof(double) is 8.
- */
 static void pack_double(unsigned char **bp, double val, int endian)
 {
-	dsplit_t u;
-
-	u.d = val;
-
-	if (endian == myendian) {
-		*((*bp)++) = u.b[7];
-		*((*bp)++) = u.b[6];
-		*((*bp)++) = u.b[5];
-		*((*bp)++) = u.b[4];
-		*((*bp)++) = u.b[3];
-		*((*bp)++) = u.b[2];
-		*((*bp)++) = u.b[1];
-		*((*bp)++) = u.b[0];
-	} else {
-		*((*bp)++) = u.b[0];
-		*((*bp)++) = u.b[1];
-		*((*bp)++) = u.b[2];
-		*((*bp)++) = u.b[3];
-		*((*bp)++) = u.b[4];
-		*((*bp)++) = u.b[5];
-		*((*bp)++) = u.b[6];
-		*((*bp)++) = u.b[7];
-	}
+    uint64_t ieee754_encoded_val = PACK_IEEE754_64(val);
+    pack_int64_t(bp, ieee754_encoded_val, endian);
 }
 
 static void unpack_int16_t(unsigned char **bp, int16_t *dst, int endian)
 {
+    uint16_t val;
 	if (endian == myendian) {
-		*dst = *((*bp)++);
-		*dst |= *((*bp)++) << 8;
+		val = *((*bp)++);
+		val |= (uint16_t)(*((*bp)++)) << 8;
 	} else {
-		*dst = *((*bp)++) << 8;
-		*dst |= *((*bp)++);
+		val = (uint16_t)(*((*bp)++)) << 8;
+		val |= *((*bp)++);
 	}
+    if (val <= 0x7fffU) {
+        *dst = val;
+    } else {
+        *dst = -1 - (int16_t)(0xffffU - val);
+    }
 }
 
 static void unpack_uint16_t(unsigned char **bp, uint16_t *dst, int endian)
 {
 	if (endian == myendian) {
 		*dst = *((*bp)++);
-		*dst |= *((*bp)++) << 8;
+		*dst |= (uint16_t)(*((*bp)++)) << 8;
 	} else {
-		*dst = *((*bp)++) << 8;
+		*dst = (uint16_t)(*((*bp)++)) << 8;
 		*dst |= *((*bp)++);
 	}
 }
 
 static void unpack_int32_t(unsigned char **bp, int32_t *dst, int endian)
 {
+    uint32_t val;
 	if (endian == myendian) {
-		*dst = *((*bp)++);
-		*dst |= *((*bp)++) << 8;
-		*dst |= *((*bp)++) << 16;
-		*dst |= *((*bp)++) << 24;
+		val = *((*bp)++);
+		val |= (uint32_t)(*((*bp)++)) << 8;
+		val |= (uint32_t)(*((*bp)++)) << 16;
+		val |= (uint32_t)(*((*bp)++)) << 24;
 	} else {
-		*dst = *((*bp)++) << 24;
-		*dst |= *((*bp)++) << 16;
-		*dst |= *((*bp)++) << 8;
-		*dst |= *((*bp)++);
+		val = *((*bp)++) << 24;
+		val |= (uint32_t)(*((*bp)++)) << 16;
+		val |= (uint32_t)(*((*bp)++)) << 8;
+		val |= (uint32_t)(*((*bp)++));
 	}
+    if (val <= 0x7fffffffU) {
+        *dst = val;
+    } else {
+        *dst = -1 - (int32_t)(0xffffffffU - val);
+    }
 }
 
 static void unpack_uint32_t(unsigned char **bp, uint32_t *dst, int endian)
 {
 	if (endian == myendian) {
 		*dst = *((*bp)++);
-		*dst |= *((*bp)++) << 8;
-		*dst |= *((*bp)++) << 16;
-		*dst |= *((*bp)++) << 24;
+		*dst |= (uint32_t)(*((*bp)++)) << 8;
+		*dst |= (uint32_t)(*((*bp)++)) << 16;
+		*dst |= (uint32_t)(*((*bp)++)) << 24;
 	} else {
 		*dst = *((*bp)++) << 24;
-		*dst |= *((*bp)++) << 16;
-		*dst |= *((*bp)++) << 8;
-		*dst |= *((*bp)++);
+		*dst |= (uint32_t)(*((*bp)++)) << 16;
+		*dst |= (uint32_t)(*((*bp)++)) << 8;
+		*dst |= (uint32_t)(*((*bp)++));
 	}
 }
 
 static void unpack_int64_t(unsigned char **bp, int64_t *dst, int endian)
 {
+    uint64_t val;
 	if (endian == myendian) {
-		*dst = *((*bp)++);
-		*dst |= (*((*bp)++) & 0xffLL) << 8;
-		*dst |= (*((*bp)++) & 0xffLL) << 16;
-		*dst |= (*((*bp)++) & 0xffLL) << 24;
-		*dst |= (*((*bp)++) & 0xffLL) << 32;
-		*dst |= (*((*bp)++) & 0xffLL) << 40;
-		*dst |= (*((*bp)++) & 0xffLL) << 48;
-		*dst |= (*((*bp)++) & 0xffLL) << 56;
+		val = *((*bp)++);
+		val |= (uint64_t)(*((*bp)++)) << 8;
+		val |= (uint64_t)(*((*bp)++)) << 16;
+		val |= (uint64_t)(*((*bp)++)) << 24;
+		val |= (uint64_t)(*((*bp)++)) << 32;
+		val |= (uint64_t)(*((*bp)++)) << 40;
+		val |= (uint64_t)(*((*bp)++)) << 48;
+		val |= (uint64_t)(*((*bp)++)) << 56;
 	} else {
-		*dst = (*((*bp)++) & 0xffLL) << 56;
-		*dst |= (*((*bp)++) & 0xffLL) << 48;
-		*dst |= (*((*bp)++) & 0xffLL) << 40;
-		*dst |= (*((*bp)++) & 0xffLL) << 32;
-		*dst |= (*((*bp)++) & 0xffLL) << 24;
-		*dst |= (*((*bp)++) & 0xffLL) << 16;
-		*dst |= (*((*bp)++) & 0xffLL) << 8;
-		*dst |= *((*bp)++);
+		val = (uint64_t)(*((*bp)++)) << 56;
+		val |= (uint64_t)(*((*bp)++)) << 48;
+		val |= (uint64_t)(*((*bp)++)) << 40;
+		val |= (uint64_t)(*((*bp)++)) << 32;
+		val |= (uint64_t)(*((*bp)++)) << 24;
+		val |= (uint64_t)(*((*bp)++)) << 16;
+		val |= (uint64_t)(*((*bp)++)) << 8;
+		val |= *((*bp)++);
 	}
+    if (val <= 0x7fffffffffffffffU) {
+        *dst = val;
+    } else {
+        *dst = -1 -(int64_t)(0xffffffffffffffffU - val);
+    }
 }
 
 static void unpack_uint64_t(unsigned char **bp, uint64_t *dst, int endian)
 {
 	if (endian == myendian) {
 		*dst = *((*bp)++);
-		*dst |= (*((*bp)++) & 0xffLL) << 8;
-		*dst |= (*((*bp)++) & 0xffLL) << 16;
-		*dst |= (*((*bp)++) & 0xffLL) << 24;
-		*dst |= (*((*bp)++) & 0xffLL) << 32;
-		*dst |= (*((*bp)++) & 0xffLL) << 40;
-		*dst |= (*((*bp)++) & 0xffLL) << 48;
-		*dst |= (*((*bp)++) & 0xffLL) << 56;
+		*dst |= (uint64_t)(*((*bp)++)) << 8;
+		*dst |= (uint64_t)(*((*bp)++)) << 16;
+		*dst |= (uint64_t)(*((*bp)++)) << 24;
+		*dst |= (uint64_t)(*((*bp)++)) << 32;
+		*dst |= (uint64_t)(*((*bp)++)) << 40;
+		*dst |= (uint64_t)(*((*bp)++)) << 48;
+		*dst |= (uint64_t)(*((*bp)++)) << 56;
 	} else {
-		*dst = (*((*bp)++) & 0xffLL) << 56;
-		*dst |= (*((*bp)++) & 0xffLL) << 48;
-		*dst |= (*((*bp)++) & 0xffLL) << 40;
-		*dst |= (*((*bp)++) & 0xffLL) << 32;
-		*dst |= (*((*bp)++) & 0xffLL) << 24;
-		*dst |= (*((*bp)++) & 0xffLL) << 16;
-		*dst |= (*((*bp)++) & 0xffLL) << 8;
+		*dst = (uint64_t)(*((*bp)++)) << 56;
+		*dst |= (uint64_t)(*((*bp)++)) << 48;
+		*dst |= (uint64_t)(*((*bp)++)) << 40;
+		*dst |= (uint64_t)(*((*bp)++)) << 32;
+		*dst |= (uint64_t)(*((*bp)++)) << 24;
+		*dst |= (uint64_t)(*((*bp)++)) << 16;
+		*dst |= (uint64_t)(*((*bp)++)) << 8;
 		*dst |= *((*bp)++);
 	}
 }
 
 static void unpack_float(unsigned char **bp, float *dst, int endian)
 {
-	fsplit_t u;
-
-	if (endian == myendian) {
-		u.b[3] = *((*bp)++);
-		u.b[2] = *((*bp)++);
-		u.b[1] = *((*bp)++);
-		u.b[0] = *((*bp)++);
-	} else {
-		u.b[0] = *((*bp)++);
-		u.b[1] = *((*bp)++);
-		u.b[2] = *((*bp)++);
-		u.b[3] = *((*bp)++);
-	}
-
-	*dst = u.f;
+    uint32_t ieee754_encoded_val = 0;
+    unpack_uint32_t(bp, &ieee754_encoded_val, endian);
+    *dst = UNPACK_IEEE754_32(ieee754_encoded_val);
 }
 
 static void unpack_double(unsigned char **bp, double *dst, int endian)
 {
-	dsplit_t u;
-
-	if (endian == myendian) {
-		u.b[7] = *((*bp)++);
-		u.b[6] = *((*bp)++);
-		u.b[5] = *((*bp)++);
-		u.b[4] = *((*bp)++);
-		u.b[3] = *((*bp)++);
-		u.b[2] = *((*bp)++);
-		u.b[1] = *((*bp)++);
-		u.b[0] = *((*bp)++);
-	} else {
-		u.b[0] = *((*bp)++);
-		u.b[1] = *((*bp)++);
-		u.b[2] = *((*bp)++);
-		u.b[3] = *((*bp)++);
-		u.b[4] = *((*bp)++);
-		u.b[5] = *((*bp)++);
-		u.b[6] = *((*bp)++);
-		u.b[7] = *((*bp)++);
-	}
-
-	*dst = u.d;
+    uint64_t ieee754_encoded_val = 0;
+    unpack_uint64_t(bp, &ieee754_encoded_val, endian);
+    *dst = UNPACK_IEEE754_64(ieee754_encoded_val);
 }
 
 static int pack_va_list(unsigned char *buf, int offset, const char *fmt,
@@ -425,7 +396,7 @@ static int pack_va_list(unsigned char *buf, int offset, const char *fmt,
 			CHECK_REPETITION(num, num_buf_idx, num_buf);
 			for (i = 0; i < num; i++) {
 				H = va_arg(args, int);
-				pack_uint16_t(&bp, H, *ep);
+				pack_int16_t(&bp, H, *ep);
 			}
 			break;
 		case 'i': /* fall through */
@@ -441,7 +412,7 @@ static int pack_va_list(unsigned char *buf, int offset, const char *fmt,
 			CHECK_REPETITION(num, num_buf_idx, num_buf);
 			for (i = 0; i < num; i++) {
 				L = va_arg(args, uint32_t);
-				pack_uint32_t(&bp, L, *ep);
+				pack_int32_t(&bp, L, *ep);
 			}
 			break;
 		case 'q':
@@ -455,7 +426,7 @@ static int pack_va_list(unsigned char *buf, int offset, const char *fmt,
 			CHECK_REPETITION(num, num_buf_idx, num_buf);
 			for (i = 0; i < num; i++) {
 				Q = va_arg(args, uint64_t);
-				pack_uint64_t(&bp, Q, *ep);
+				pack_int64_t(&bp, Q, *ep);
 			}
 			break;
 		case 'f':

@@ -2,11 +2,9 @@
  * struct.h
  *
  *  Created on: 2011. 5. 2.
- *      Author: Wonseok
- *
+ *      Author: wonseok choi (svperbeast@gmail.com)
  *
  * Interpret strings as packed binary data
- *
  *
  * Table 1. Byte order
  *  ----------------------------------
@@ -55,8 +53,8 @@
  * A format character may be preceded by an integral repeat count.
  * For example, the format string '4h' means exactly the same as 'hhhh'.
  *
- * For the 's' format character, the count is interpreted as the size of the string,
- * not a repeat count like for the other format characters.
+ * For the 's' format character, the count is interpreted as the size of the
+ * string, not a repeat count like for the other format characters.
  * For example, '10s' means a single 10-byte string.
  *
  * Example 1. pack/unpack int type value.
