@@ -274,10 +274,10 @@ static void unpack_int64_t(unsigned char **bp, int64_t *dst, int endian)
 		val |= (uint64_t)(*((*bp)++)) << 8;
 		val |= *((*bp)++);
 	}
-    if (val <= 0x7fffffffffffffffU) {
+    if (val <= 0x7fffffffffffffffULL) {
         *dst = val;
     } else {
-        *dst = -1 -(int64_t)(0xffffffffffffffffU - val);
+        *dst = -1 -(int64_t)(0xffffffffffffffffULL - val);
     }
 }
 
