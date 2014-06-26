@@ -604,49 +604,53 @@ static int unpack_va_list(unsigned char *buf, int offset, const char *fmt,
  * preifx: struct_
  *
  */
-int struct_pack(unsigned char *buf, const char *fmt, ...)
+int struct_pack(void *buf, const char *fmt, ...)
 {
 	va_list args;
 	int packed_len = 0;
 
 	va_start(args, fmt);
-	packed_len = pack_va_list(buf, 0, fmt, args);
+	packed_len = pack_va_list(
+            (unsigned char*)buf, 0, fmt, args);
 	va_end(args);
 
 	return packed_len;
 }
 
-int struct_pack_into(int offset, unsigned char *buf, const char *fmt, ...)
+int struct_pack_into(int offset, void *buf, const char *fmt, ...)
 {
 	va_list args;
 	int packed_len = 0;
 
 	va_start(args, fmt);
-	packed_len = pack_va_list(buf, offset, fmt, args);
+	packed_len = pack_va_list(
+            (unsigned char*)buf, offset, fmt, args);
 	va_end(args);
 
 	return packed_len;
 }
 
-int struct_unpack(unsigned char *buf, const char *fmt, ...)
+int struct_unpack(void *buf, const char *fmt, ...)
 {
 	va_list args;
 	int unpacked_len = 0;
 
 	va_start(args, fmt);
-	unpacked_len = unpack_va_list(buf, 0, fmt, args);
+	unpacked_len = unpack_va_list(
+            (unsigned char*)buf, 0, fmt, args);
 	va_end(args);
 
 	return unpacked_len;
 }
 
-int struct_unpack_from(int offset, unsigned char *buf, const char *fmt, ...)
+int struct_unpack_from(int offset, void *buf, const char *fmt, ...)
 {
 	va_list args;
 	int unpacked_len = 0;
 
 	va_start(args, fmt);
-	unpacked_len = unpack_va_list(buf, offset, fmt, args);
+	unpacked_len = unpack_va_list(
+            (unsigned char*)buf, offset, fmt, args);
 	va_end(args);
 
 	return unpacked_len;
