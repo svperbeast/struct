@@ -48,6 +48,10 @@
  *   d     | double             | 8
  *  -------+--------------------+--------------
  *   s     | char[]             |
+ *  -------+--------------------+--------------
+ *   p     | char[]             |
+ *  -------+--------------------+--------------
+ *   x     | pad bytes          |
  *  -------------------------------------------
  *
  * A format character may be preceded by an integral repeat count.
@@ -68,7 +72,7 @@
  *
  * Example 2. pack/unpack a string.
  *
- * char buf[BUFSIZ] = {0, );
+ * char buf[BUFSIZ] = {0, };
  * char str[32] = {'\0', };
  * char fmt[32] = {'\0', };
  * char ostr[32] = {'\0', };
@@ -85,10 +89,37 @@
 extern "C" {
 #endif
 
+/**
+ * @brief pack data
+ * @return the number of bytes encoded on success, -1 on failure.
+ */
 extern int struct_pack(void *buf, const char *fmt, ...);
+
+/**
+ * @brief pack data with offset
+ * @return the number of bytes encoded on success, -1 on failure.
+ */
 extern int struct_pack_into(int offset, void *buf, const char *fmt, ...);
+
+/**
+ * @brief unpack data
+ * @return the number of bytes decoded on success, -1 on failure.
+ */
 extern int struct_unpack(void *buf, const char *fmt, ...);
+
+/**
+ * @brief unpack data with offset
+ * @return the number of bytes decoded on success, -1 on failure.
+ */
 extern int struct_unpack_from(int offset, void *buf, const char *fmt, ...);
+
+/**
+ * @brief calculate the size of a format string
+ * @return the number of bytes needed by the format string on success,
+ * -1 on failure.
+ *
+ * make sure that the return value is > 0, before using it.
+ */
 extern int struct_calcsize(const char *fmt);
 
 #ifdef __cplusplus

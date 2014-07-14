@@ -61,6 +61,26 @@ TEST_F(Struct, CalcsizeValid)
 	EXPECT_TRUE(sizeof(float) == struct_calcsize("f"));
 	EXPECT_TRUE(sizeof(double) == struct_calcsize("d"));
 	EXPECT_TRUE(sizeof(strbuf) == struct_calcsize("32s"));
+	EXPECT_TRUE(sizeof(strbuf) == struct_calcsize("32p"));
+	EXPECT_TRUE(sizeof(char) == struct_calcsize("x"));
+}
+
+TEST_F(Struct, PadBytePackUnpackingValid1)
+{
+	unsigned char o1, o2;
+	struct_pack(buf, "2x2b", c, c);
+	struct_unpack(buf, "2x2b", &o1, &o2);
+	EXPECT_EQ(c, o1);
+	EXPECT_EQ(c, o2);
+}
+
+TEST_F(Struct, PadBytePackUnpackingValid2)
+{
+	unsigned char o1, o2;
+	struct_pack(buf, "xbxb", c, c);
+	struct_unpack(buf, "xbxb", &o1, &o2);
+	EXPECT_EQ(c, o1);
+	EXPECT_EQ(c, o2);
 }
 
 TEST_F(Struct, Signed1bytePackUnpackingValid)
@@ -90,7 +110,7 @@ TEST_F(Struct, Signed1BytePackUnpackingWithOffsetValid)
 	EXPECT_EQ(c, o);
 }
 
-TEST_F(Struct, SignedmultiBytePackUnpackingWithOffsetValid)
+TEST_F(Struct, SignedMultiBytePackUnpackingWithOffsetValid)
 {
 	unsigned char o1, o2, o3, o4;
 	struct_pack_into(1, buf, "4b", c, c, c, c);
@@ -101,7 +121,7 @@ TEST_F(Struct, SignedmultiBytePackUnpackingWithOffsetValid)
 	EXPECT_EQ(c, o4);
 }
 
-TEST_F(Struct, 1bytePackUnpackingValid)
+TEST_F(Struct, SingleBytePackUnpackingValid)
 {
 	unsigned char o;
 	struct_pack(buf, "B", c);
@@ -120,7 +140,7 @@ TEST_F(Struct, MultiBytePackUnpackingValid)
 	EXPECT_EQ(c, o4);
 }
 
-TEST_F(Struct, 1BytePackUnpackingWithOffsetValid)
+TEST_F(Struct, SingleBytePackUnpackingWithOffsetValid)
 {
 	char o;
 	struct_pack_into(1, buf, "B", c);
@@ -573,7 +593,7 @@ TEST_F(Struct, doubleMultiPackUnpackingWithOffsetValid)
 	EXPECT_DOUBLE_EQ(i, o2);
 }
 
-TEST_F(Struct, StringPackUnpackingValid)
+TEST_F(Struct, StringPackUnpackingValidWithS)
 {
 	char str[32];
 	char o[32];
@@ -584,6 +604,23 @@ TEST_F(Struct, StringPackUnpackingValid)
 	memset(fmt, 0, sizeof(fmt));
 	strcpy(str, "test0");
 	sprintf(fmt, "%ds", (int)strlen(str));
+
+	struct_pack(buf, fmt, str);
+	struct_unpack(buf, fmt, o);
+	EXPECT_STREQ(str, o);
+}
+
+TEST_F(Struct, StringPackUnpackingValidWithP)
+{
+	char str[32];
+	char o[32];
+	char fmt[32];
+
+	memset(str, 0, sizeof(str));
+	memset(o, 0, sizeof(o));
+	memset(fmt, 0, sizeof(fmt));
+	strcpy(str, "test0");
+	sprintf(fmt, "%dp", (int)strlen(str));
 
 	struct_pack(buf, fmt, str);
 	struct_unpack(buf, fmt, o);

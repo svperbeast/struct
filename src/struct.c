@@ -443,13 +443,20 @@ static int pack_va_list(unsigned char *buf, int offset, const char *fmt,
 				pack_double(&bp, d, *ep);
 			}
 			break;
-		case 's':
+		case 's': /* fall through */
+		case 'p':
 			CHECK_REPETITION(num, num_buf_idx, num_buf);
 			s = va_arg(args, char*);
 			for (i = 0; i < num; i++) {
 				*bp++ = s[i];
 			}
 			break;
+        case 'x':
+			CHECK_REPETITION(num, num_buf_idx, num_buf);
+            for (i = 0; i < num; i++) {
+				*bp++ = 0;
+			}
+            break;
 		default:
 			if (isdigit((int)*p)) {
 				num_buf[num_buf_idx++] = *p;
@@ -580,13 +587,20 @@ static int unpack_va_list(unsigned char *buf, int offset, const char *fmt,
 				unpack_double(&bp, d, *ep);
 			}
 			break;
-		case 's':
+		case 's': /* fall through */
+		case 'p':
 			CHECK_REPETITION(num, num_buf_idx, num_buf);
 			s = va_arg(args, char*);
 			for (i = 0; i < num; i++) {
 				s[i] = *bp++;
 			}
 			break;
+        case 'x':
+			CHECK_REPETITION(num, num_buf_idx, num_buf);
+			for (i = 0; i < num; i++) {
+                bp++;
+            }
+            break;
 		default:
 			if (isdigit((int)*p)) {
 				num_buf[num_buf_idx++] = *p;
@@ -719,7 +733,12 @@ int struct_calcsize(const char *fmt)
 			CHECK_REPETITION(num, num_buf_idx, num_buf);
 			ret += (num * sizeof(double));
 			break;
-		case 's':
+		case 's': /* fall through */
+		case 'p':
+			CHECK_REPETITION(num, num_buf_idx, num_buf);
+			ret += (num * sizeof(char));
+			break;
+		case 'x':
 			CHECK_REPETITION(num, num_buf_idx, num_buf);
 			ret += (num * sizeof(char));
 			break;
