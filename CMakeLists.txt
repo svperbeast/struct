@@ -42,7 +42,7 @@ install (FILES
 include (CTest)
 enable_testing ()
 
-set (MEMORYCHECK_COMMAND /usr/bin/valgrind)
+set (MEMORYCHECK_COMMAND valgrind)
 set (MEMORYCHECK_COMMAND_OPTIONS "--tool=memcheck --leack-check=yes")
 
 add_executable (struct_test
