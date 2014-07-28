@@ -97,7 +97,7 @@ extern int struct_pack(void *buf, const char *fmt, ...);
 
 /**
  * @brief pack data with offset
- * @return the number of bytes encoded on success, -1 on failure.
+ * @return updated offset on success, -1 on failure.
  */
 extern int struct_pack_into(int offset, void *buf, const char *fmt, ...);
 
@@ -109,7 +109,7 @@ extern int struct_unpack(void *buf, const char *fmt, ...);
 
 /**
  * @brief unpack data with offset
- * @return the number of bytes decoded on success, -1 on failure.
+ * @return updated offset on success, -1 on failure.
  */
 extern int struct_unpack_from(int offset, void *buf, const char *fmt, ...);
 
