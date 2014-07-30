@@ -13,32 +13,16 @@
 // - Beej's Guide to Network Programming
 //
 // macros for packing floats and doubles:
-#define PACK_IEEE754_16(f) (pack_ieee754((f), 16, 5))
 #define PACK_IEEE754_32(f) (pack_ieee754((f), 32, 8))
 #define PACK_IEEE754_64(f) (pack_ieee754((f), 64, 11))
-#define UNPACK_IEEE754_16(i) (unpack_ieee754((i), 16, 5))
 #define UNPACK_IEEE754_32(i) (unpack_ieee754((i), 32, 8))
 #define UNPACK_IEEE754_64(i) (unpack_ieee754((i), 64, 11))
 
-#define CHECK_PREREQUISITE() do { \
-	if (STRUCT_ENDIAN_NOT_SET == myendian) { \
-		struct_init(); \
-	} \
-} while (0)
-
-#define CHECK_REPETITION(n, i, b) do { \
-	if (0 < (i)) { \
-		errno = 0; \
-		(n) = strtol((b), NULL, 10); \
-		if (errno != 0) { \
-			break; \
-		} \
-	} else { \
-		(n) = 1; \
-	} \
-	(i) = 0; \
-	memset((b), 0, sizeof((b))); \
-} while (0)
+#define CHECK_REPETITION(rep) do { \
+    if (rep == 0) { \
+        rep = 1; \
+    } \
+} while(0)
 
 static int myendian = STRUCT_ENDIAN_NOT_SET;
 
@@ -325,9 +309,7 @@ static int pack_va_list(unsigned char *buf, int offset, const char *fmt,
 	unsigned char *bp;
 	int *ep = &myendian;
 	int endian;
-	char num_buf[32];
-	int num_buf_idx;
-	int num;
+	int rep = 0;
 	int i;
 
 	char b;
@@ -342,10 +324,9 @@ static int pack_va_list(unsigned char *buf, int offset, const char *fmt,
 	double d;
 	char *s;
 
-	CHECK_PREREQUISITE();
-
-	memset(num_buf, 0, sizeof(num_buf));
-	num_buf_idx = 0;
+	if (STRUCT_ENDIAN_NOT_SET == myendian) {
+		struct_init();
+	}
 
 	/*
 	 * 'char' and 'short' values, they must be extracted as 'int's,
@@ -372,98 +353,102 @@ static int pack_va_list(unsigned char *buf, int offset, const char *fmt,
 			ep = &endian;
 			break;
 		case 'b':
-			CHECK_REPETITION(num, num_buf_idx, num_buf);
-			for (i = 0; i < num; i++) {
+            CHECK_REPETITION(rep);
+			for (i = 0; i < rep; i++) {
 				b = va_arg(args, int);
 				*bp++ = b;
 			}
 			break;
 		case 'B':
-			CHECK_REPETITION(num, num_buf_idx, num_buf);
-			for (i = 0; i < num; i++) {
+			CHECK_REPETITION(rep);
+			for (i = 0; i < rep; i++) {
 				B = va_arg(args, unsigned int);
 				*bp++ = B;
 			}
 			break;
 		case 'h':
-			CHECK_REPETITION(num, num_buf_idx, num_buf);
-			for (i = 0; i < num; i++) {
+			CHECK_REPETITION(rep);
+			for (i = 0; i < rep; i++) {
 				h = va_arg(args, int);
 				pack_int16_t(&bp, h, *ep);
 			}
 			break;
 		case 'H':
-			CHECK_REPETITION(num, num_buf_idx, num_buf);
-			for (i = 0; i < num; i++) {
+			CHECK_REPETITION(rep);
+			for (i = 0; i < rep; i++) {
 				H = va_arg(args, int);
 				pack_int16_t(&bp, H, *ep);
 			}
 			break;
 		case 'i': /* fall through */
 		case 'l':
-			CHECK_REPETITION(num, num_buf_idx, num_buf);
-			for (i = 0; i < num; i++) {
+			CHECK_REPETITION(rep);
+			for (i = 0; i < rep; i++) {
 				l = va_arg(args, int32_t);
 				pack_int32_t(&bp, l, *ep);
 			}
 			break;
 		case 'I': /* fall through */
 		case 'L':
-			CHECK_REPETITION(num, num_buf_idx, num_buf);
-			for (i = 0; i < num; i++) {
+			CHECK_REPETITION(rep);
+			for (i = 0; i < rep; i++) {
 				L = va_arg(args, uint32_t);
 				pack_int32_t(&bp, L, *ep);
 			}
 			break;
 		case 'q':
-			CHECK_REPETITION(num, num_buf_idx, num_buf);
-			for (i = 0; i < num; i++) {
+			CHECK_REPETITION(rep);
+			for (i = 0; i < rep; i++) {
 				q = va_arg(args, int64_t);
 				pack_int64_t(&bp, q, *ep);
 			}
 			break;
 		case 'Q':
-			CHECK_REPETITION(num, num_buf_idx, num_buf);
-			for (i = 0; i < num; i++) {
+			CHECK_REPETITION(rep);
+			for (i = 0; i < rep; i++) {
 				Q = va_arg(args, uint64_t);
 				pack_int64_t(&bp, Q, *ep);
 			}
 			break;
 		case 'f':
-			CHECK_REPETITION(num, num_buf_idx, num_buf);
-			for (i = 0; i < num; i++) {
+			CHECK_REPETITION(rep);
+			for (i = 0; i < rep; i++) {
 				f = va_arg(args, double);
 				pack_float(&bp, f, *ep);
 			}
 			break;
 		case 'd':
-			CHECK_REPETITION(num, num_buf_idx, num_buf);
-			for (i = 0; i < num; i++) {
+			CHECK_REPETITION(rep);
+			for (i = 0; i < rep; i++) {
 				d = va_arg(args, double);
 				pack_double(&bp, d, *ep);
 			}
 			break;
 		case 's': /* fall through */
 		case 'p':
-			CHECK_REPETITION(num, num_buf_idx, num_buf);
+			CHECK_REPETITION(rep);
 			s = va_arg(args, char*);
-			for (i = 0; i < num; i++) {
+			for (i = 0; i < rep; i++) {
 				*bp++ = s[i];
 			}
 			break;
         case 'x':
-			CHECK_REPETITION(num, num_buf_idx, num_buf);
-            for (i = 0; i < num; i++) {
+			CHECK_REPETITION(rep);
+            for (i = 0; i < rep; i++) {
 				*bp++ = 0;
 			}
             break;
 		default:
 			if (isdigit((int)*p)) {
-				num_buf[num_buf_idx++] = *p;
+                rep = rep * 10 + (*p - '0');
 			} else {
 				return -1;
 			}
 		}
+
+        if (!isdigit((int)*p)) {
+            rep = 0;
+        }
 	}
 	return (bp - buf);
 }
@@ -475,9 +460,7 @@ static int unpack_va_list(unsigned char *buf, int offset, const char *fmt,
 	unsigned char *bp;
 	int *ep = &myendian;
 	int endian;
-	char num_buf[32];
-	int num_buf_idx;
-	int num;
+	int rep = 0;
 	int i;
 
 	char *b;
@@ -492,10 +475,9 @@ static int unpack_va_list(unsigned char *buf, int offset, const char *fmt,
 	double *d;
 	char *s;
 
-	CHECK_PREREQUISITE();
-
-	memset(num_buf, 0, sizeof(num_buf));
-	num_buf_idx = 0;
+	if (STRUCT_ENDIAN_NOT_SET == myendian) {
+		struct_init();
+	}
 
 	bp = buf + offset;
 	for (p = fmt; *p != '\0'; p++) {
@@ -516,98 +498,102 @@ static int unpack_va_list(unsigned char *buf, int offset, const char *fmt,
 			ep = &endian;
 			break;
 		case 'b':
-			CHECK_REPETITION(num, num_buf_idx, num_buf);
-			for (i = 0; i < num; i++) {
+			CHECK_REPETITION(rep);
+			for (i = 0; i < rep; i++) {
 				b = va_arg(args, char*);
 				*b = *bp++;
 			}
 			break;
 		case 'B':
-			CHECK_REPETITION(num, num_buf_idx, num_buf);
-			for (i = 0; i < num; i++) {
+			CHECK_REPETITION(rep);
+			for (i = 0; i < rep; i++) {
 				B = va_arg(args, unsigned char*);
 				*B = *bp++;
 			}
 			break;
 		case 'h':
-			CHECK_REPETITION(num, num_buf_idx, num_buf);
-			for (i = 0; i < num; i++) {
+			CHECK_REPETITION(rep);
+			for (i = 0; i < rep; i++) {
 				h = va_arg(args, int16_t*);
 				unpack_int16_t(&bp, h, *ep);
 			}
 			break;
 		case 'H':
-			CHECK_REPETITION(num, num_buf_idx, num_buf);
-			for (i = 0; i < num; i++) {
+			CHECK_REPETITION(rep);
+			for (i = 0; i < rep; i++) {
 				H = va_arg(args, uint16_t*);
 				unpack_uint16_t(&bp, H, *ep);
 			}
 			break;
 		case 'i': /* fall through */
 		case 'l':
-			CHECK_REPETITION(num, num_buf_idx, num_buf);
-			for (i = 0; i < num; i++) {
+			CHECK_REPETITION(rep);
+			for (i = 0; i < rep; i++) {
 				l = va_arg(args, int32_t*);
 				unpack_int32_t(&bp, l, *ep);
 			}
 			break;
 		case 'I': /* fall through */
 		case 'L':
-			CHECK_REPETITION(num, num_buf_idx, num_buf);
-			for (i = 0; i < num; i++) {
+			CHECK_REPETITION(rep);
+			for (i = 0; i < rep; i++) {
 				L = va_arg(args, uint32_t*);
 				unpack_uint32_t(&bp, L, *ep);
 			}
 			break;
 		case 'q':
-			CHECK_REPETITION(num, num_buf_idx, num_buf);
-			for (i = 0; i < num; i++) {
+			CHECK_REPETITION(rep);
+			for (i = 0; i < rep; i++) {
 				q = va_arg(args, int64_t*);
 				unpack_int64_t(&bp, q, *ep);
 			}
 			break;
 		case 'Q':
-			CHECK_REPETITION(num, num_buf_idx, num_buf);
-			for (i = 0; i < num; i++) {
+			CHECK_REPETITION(rep);
+			for (i = 0; i < rep; i++) {
 				Q = va_arg(args, uint64_t*);
 				unpack_uint64_t(&bp, Q, *ep);
 			}
 			break;
 		case 'f':
-			CHECK_REPETITION(num, num_buf_idx, num_buf);
-			for (i = 0; i < num; i++) {
+			CHECK_REPETITION(rep);
+			for (i = 0; i < rep; i++) {
 				f = va_arg(args, float*);
 				unpack_float(&bp, f, *ep);
 			}
 			break;
 		case 'd':
-			CHECK_REPETITION(num, num_buf_idx, num_buf);
-			for (i = 0; i < num; i++) {
+			CHECK_REPETITION(rep);
+			for (i = 0; i < rep; i++) {
 				d = va_arg(args, double*);
 				unpack_double(&bp, d, *ep);
 			}
 			break;
 		case 's': /* fall through */
 		case 'p':
-			CHECK_REPETITION(num, num_buf_idx, num_buf);
+			CHECK_REPETITION(rep);
 			s = va_arg(args, char*);
-			for (i = 0; i < num; i++) {
+			for (i = 0; i < rep; i++) {
 				s[i] = *bp++;
 			}
 			break;
         case 'x':
-			CHECK_REPETITION(num, num_buf_idx, num_buf);
-			for (i = 0; i < num; i++) {
+			CHECK_REPETITION(rep);
+			for (i = 0; i < rep; i++) {
                 bp++;
             }
             break;
 		default:
 			if (isdigit((int)*p)) {
-				num_buf[num_buf_idx++] = *p;
+                rep = rep * 10 + (*p - '0');
 			} else {
 				return -1;
 			}
 		}
+
+        if (!isdigit((int)*p)) {
+            rep = 0;
+        }
 	}
 	return (bp - buf);
 }
@@ -672,17 +658,13 @@ int struct_unpack_from(int offset, void *buf, const char *fmt, ...)
 
 int struct_calcsize(const char *fmt)
 {
-	int ret;
+	int ret = 0;
 	const char *p;
-	char num_buf[32];
-	int num_buf_idx;
-	int num;
+	int rep = 0;
 
-	CHECK_PREREQUISITE();
-
-	ret = 0;
-	memset(num_buf, 0, sizeof(num_buf));
-	num_buf_idx = 0;
+	if (STRUCT_ENDIAN_NOT_SET == myendian) {
+		struct_init();
+	}
 
 	for (p = fmt; *p != '\0'; p++) {
 		switch (*p) {
@@ -692,63 +674,67 @@ int struct_calcsize(const char *fmt)
 		case '!': /* ignore endian characters */
 			break;
 		case 'b':
-			CHECK_REPETITION(num, num_buf_idx, num_buf);
-			ret += (num * sizeof(char));
+			CHECK_REPETITION(rep);
+			ret += (rep * sizeof(char));
 			break;
 		case 'B':
-			CHECK_REPETITION(num, num_buf_idx, num_buf);
-			ret += (num * sizeof(unsigned char));
+			CHECK_REPETITION(rep);
+			ret += (rep * sizeof(unsigned char));
 			break;
 		case 'h':
-			CHECK_REPETITION(num, num_buf_idx, num_buf);
-			ret += (num * sizeof(int16_t));
+			CHECK_REPETITION(rep);
+			ret += (rep * sizeof(int16_t));
 			break;
 		case 'H':
-			CHECK_REPETITION(num, num_buf_idx, num_buf);
-			ret += (num * sizeof(uint16_t));
+			CHECK_REPETITION(rep);
+			ret += (rep * sizeof(uint16_t));
 			break;
 		case 'i': /* fall through */
 		case 'l':
-			CHECK_REPETITION(num, num_buf_idx, num_buf);
-			ret += (num * sizeof(int32_t));
+			CHECK_REPETITION(rep);
+			ret += (rep * sizeof(int32_t));
 			break;
 		case 'I': /* fall through */
 		case 'L':
-			CHECK_REPETITION(num, num_buf_idx, num_buf);
-			ret += (num * sizeof(uint32_t));
+			CHECK_REPETITION(rep);
+			ret += (rep * sizeof(uint32_t));
 			break;
 		case 'q':
-			CHECK_REPETITION(num, num_buf_idx, num_buf);
-			ret += (num * sizeof(int64_t));
+			CHECK_REPETITION(rep);
+			ret += (rep * sizeof(int64_t));
 			break;
 		case 'Q':
-			CHECK_REPETITION(num, num_buf_idx, num_buf);
-			ret += (num * sizeof(uint64_t));
+			CHECK_REPETITION(rep);
+			ret += (rep * sizeof(uint64_t));
 			break;
 		case 'f':
-			CHECK_REPETITION(num, num_buf_idx, num_buf);
-			ret += (num * sizeof(float));
+			CHECK_REPETITION(rep);
+			ret += (rep * sizeof(float));
 			break;
 		case 'd':
-			CHECK_REPETITION(num, num_buf_idx, num_buf);
-			ret += (num * sizeof(double));
+			CHECK_REPETITION(rep);
+			ret += (rep * sizeof(double));
 			break;
 		case 's': /* fall through */
 		case 'p':
-			CHECK_REPETITION(num, num_buf_idx, num_buf);
-			ret += (num * sizeof(char));
+			CHECK_REPETITION(rep);
+			ret += (rep * sizeof(char));
 			break;
 		case 'x':
-			CHECK_REPETITION(num, num_buf_idx, num_buf);
-			ret += (num * sizeof(char));
+			CHECK_REPETITION(rep);
+			ret += (rep * sizeof(char));
 			break;
 		default:
 			if (isdigit((int)*p)) {
-				num_buf[num_buf_idx++] = *p;
+                rep = rep * 10 + (*p - '0');
 			} else {
 				return -1;
 			}
 		}
+
+        if (!isdigit((int)*p)) {
+            rep = 0;
+        }
 	}
 	return ret;
 }
