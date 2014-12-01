@@ -1,5 +1,5 @@
 #include "struct.h"
-#include "endian.h"
+#include "struct_endian.h"
 
 #include <stdarg.h>
 #include <stdint.h>
@@ -18,21 +18,25 @@
 #define UNPACK_IEEE754_32(i) (unpack_ieee754((i), 32, 8))
 #define UNPACK_IEEE754_64(i) (unpack_ieee754((i), 64, 11))
 
-#define CHECK_REPETITION(rep) do { \
-    if (rep == 0) { \
-        rep = 1; \
-    } \
-} while(0)
+#define INIT_REPETITION(_x) int _struct_rep = 0
+
+#define BEGIN_REPETITION(_x) do { _struct_rep--
+
+#define END_REPETITION(_x) } while(_struct_rep > 0)
+
+#define INC_REPETITION(_x) _struct_rep = _struct_rep * 10 + (*p - '0')
+
+#define CLEAR_REPETITION(_x) _struct_rep = 0
 
 static int myendian = STRUCT_ENDIAN_NOT_SET;
 
 static void struct_init(void)
 {
-	myendian = get_endian();
+	myendian = struct_get_endian();
 }
 
-static unsigned long long int pack_ieee754(long double f,
-        unsigned bits, unsigned expbits)
+static unsigned long long pack_ieee754(long double f,
+        unsigned int bits, unsigned int expbits)
 {
     long double fnorm;
     int shift;
@@ -67,22 +71,23 @@ static unsigned long long int pack_ieee754(long double f,
     fnorm = fnorm - 1.0;
 
     // calculate the binary form (non-float) of the significand data
-    significand = fnorm * ((1LL << significandbits) + 0.5f);
+    significand = (long long)(fnorm * ((1LL << significandbits) + 0.5F));
 
     // get the biased exponent
-    exp = shift + ((1 << (expbits - 1)) - 1); // shift + bias
+    // shift + bias
+    exp = shift + ((1LL << (expbits - 1)) - 1);
 
     // return the final answer
-    return (sign << (bits - 1)) | (exp << (bits - expbits - 1)) | significand;
+    return (sign << (bits - 1U)) | (exp << (bits - expbits - 1U)) | significand;
 }
 
 static long double unpack_ieee754(unsigned long long int i,
-        unsigned bits, unsigned expbits)
+        unsigned int bits, unsigned int expbits)
 {
     long double result;
     long long shift;
-    unsigned bias;
-    unsigned significandbits = bits - expbits - 1; // -1 for sign bit
+    unsigned int bias;
+    unsigned int significandbits = bits - expbits - 1; // -1 for sign bit
 
     if (i == 0) {
         return 0.0;
@@ -91,7 +96,7 @@ static long double unpack_ieee754(unsigned long long int i,
     // pull the significand
     result = (i & ((1LL << significandbits) - 1)); // mask
     result /= (1LL << significandbits); // convert back to float
-    result += 1.0f; // add the one back on
+    result += 1.0F; // add the one back on
 
     // deal with the exponent
     bias = (1 << (expbits - 1)) - 1;
@@ -305,12 +310,11 @@ static void unpack_double(unsigned char **bp, double *dst, int endian)
 static int pack_va_list(unsigned char *buf, int offset, const char *fmt,
 						  va_list args)
 {
+    INIT_REPETITION();
 	const char *p;
 	unsigned char *bp;
 	int *ep = &myendian;
 	int endian;
-	int rep = 0;
-	int i;
 
 	char b;
 	unsigned char B;
@@ -353,101 +357,92 @@ static int pack_va_list(unsigned char *buf, int offset, const char *fmt,
 			ep = &endian;
 			break;
 		case 'b':
-            CHECK_REPETITION(rep);
-			for (i = 0; i < rep; i++) {
-				b = va_arg(args, int);
-				*bp++ = b;
-			}
+            BEGIN_REPETITION();
+			    b = va_arg(args, int);
+			    *bp++ = b;
+            END_REPETITION();
 			break;
 		case 'B':
-			CHECK_REPETITION(rep);
-			for (i = 0; i < rep; i++) {
-				B = va_arg(args, unsigned int);
-				*bp++ = B;
-			}
+            BEGIN_REPETITION();
+			    B = va_arg(args, unsigned int);
+			    *bp++ = B;
+            END_REPETITION();
 			break;
 		case 'h':
-			CHECK_REPETITION(rep);
-			for (i = 0; i < rep; i++) {
-				h = va_arg(args, int);
-				pack_int16_t(&bp, h, *ep);
-			}
+            BEGIN_REPETITION();
+			    h = va_arg(args, int);
+			    pack_int16_t(&bp, h, *ep);
+            END_REPETITION();
 			break;
 		case 'H':
-			CHECK_REPETITION(rep);
-			for (i = 0; i < rep; i++) {
-				H = va_arg(args, int);
-				pack_int16_t(&bp, H, *ep);
-			}
+            BEGIN_REPETITION();
+			    H = va_arg(args, int);
+			    pack_int16_t(&bp, H, *ep);
+            END_REPETITION();
 			break;
 		case 'i': /* fall through */
 		case 'l':
-			CHECK_REPETITION(rep);
-			for (i = 0; i < rep; i++) {
-				l = va_arg(args, int32_t);
-				pack_int32_t(&bp, l, *ep);
-			}
+            BEGIN_REPETITION();
+			    l = va_arg(args, int32_t);
+			    pack_int32_t(&bp, l, *ep);
+            END_REPETITION();
 			break;
 		case 'I': /* fall through */
 		case 'L':
-			CHECK_REPETITION(rep);
-			for (i = 0; i < rep; i++) {
-				L = va_arg(args, uint32_t);
-				pack_int32_t(&bp, L, *ep);
-			}
+            BEGIN_REPETITION();
+			    L = va_arg(args, uint32_t);
+			    pack_int32_t(&bp, L, *ep);
+            END_REPETITION();
 			break;
 		case 'q':
-			CHECK_REPETITION(rep);
-			for (i = 0; i < rep; i++) {
+            BEGIN_REPETITION();
 				q = va_arg(args, int64_t);
 				pack_int64_t(&bp, q, *ep);
-			}
+            END_REPETITION();
 			break;
 		case 'Q':
-			CHECK_REPETITION(rep);
-			for (i = 0; i < rep; i++) {
+            BEGIN_REPETITION();
 				Q = va_arg(args, uint64_t);
 				pack_int64_t(&bp, Q, *ep);
-			}
+            END_REPETITION();
 			break;
 		case 'f':
-			CHECK_REPETITION(rep);
-			for (i = 0; i < rep; i++) {
+            BEGIN_REPETITION();
 				f = va_arg(args, double);
 				pack_float(&bp, f, *ep);
-			}
+            END_REPETITION();
 			break;
 		case 'd':
-			CHECK_REPETITION(rep);
-			for (i = 0; i < rep; i++) {
+            BEGIN_REPETITION();
 				d = va_arg(args, double);
 				pack_double(&bp, d, *ep);
-			}
+            END_REPETITION();
 			break;
 		case 's': /* fall through */
 		case 'p':
-			CHECK_REPETITION(rep);
-			s = va_arg(args, char*);
-			for (i = 0; i < rep; i++) {
-				*bp++ = s[i];
-			}
+            {
+                int i = 0;
+                s = va_arg(args, char*);
+                BEGIN_REPETITION();
+                    *bp++ = s[i++];
+                END_REPETITION();
+            }
 			break;
         case 'x':
-			CHECK_REPETITION(rep);
-            for (i = 0; i < rep; i++) {
+            BEGIN_REPETITION();
 				*bp++ = 0;
-			}
+            END_REPETITION();
             break;
 		default:
 			if (isdigit((int)*p)) {
-                rep = rep * 10 + (*p - '0');
+                INC_REPETITION();
 			} else {
 				return -1;
 			}
 		}
 
         if (!isdigit((int)*p)) {
-            rep = 0;
+            CLEAR_REPETITION();
         }
 	}
 	return (bp - buf);
@@ -456,12 +451,11 @@ static int pack_va_list(unsigned char *buf, int offset, const char *fmt,
 static int unpack_va_list(unsigned char *buf, int offset, const char *fmt,
 					 va_list args)
 {
+    INIT_REPETITION();
 	const char *p;
 	unsigned char *bp;
 	int *ep = &myendian;
 	int endian;
-	int rep = 0;
-	int i;
 
 	char *b;
 	unsigned char *B;
@@ -498,101 +492,92 @@ static int unpack_va_list(unsigned char *buf, int offset, const char *fmt,
 			ep = &endian;
 			break;
 		case 'b':
-			CHECK_REPETITION(rep);
-			for (i = 0; i < rep; i++) {
+            BEGIN_REPETITION();
 				b = va_arg(args, char*);
 				*b = *bp++;
-			}
+            END_REPETITION();
 			break;
 		case 'B':
-			CHECK_REPETITION(rep);
-			for (i = 0; i < rep; i++) {
+            BEGIN_REPETITION();
 				B = va_arg(args, unsigned char*);
 				*B = *bp++;
-			}
+            END_REPETITION();
 			break;
 		case 'h':
-			CHECK_REPETITION(rep);
-			for (i = 0; i < rep; i++) {
+            BEGIN_REPETITION();
 				h = va_arg(args, int16_t*);
 				unpack_int16_t(&bp, h, *ep);
-			}
+            END_REPETITION();
 			break;
 		case 'H':
-			CHECK_REPETITION(rep);
-			for (i = 0; i < rep; i++) {
+            BEGIN_REPETITION();
 				H = va_arg(args, uint16_t*);
 				unpack_uint16_t(&bp, H, *ep);
-			}
+            END_REPETITION();
 			break;
 		case 'i': /* fall through */
 		case 'l':
-			CHECK_REPETITION(rep);
-			for (i = 0; i < rep; i++) {
+            BEGIN_REPETITION();
 				l = va_arg(args, int32_t*);
 				unpack_int32_t(&bp, l, *ep);
-			}
+            END_REPETITION();
 			break;
 		case 'I': /* fall through */
 		case 'L':
-			CHECK_REPETITION(rep);
-			for (i = 0; i < rep; i++) {
+            BEGIN_REPETITION();
 				L = va_arg(args, uint32_t*);
 				unpack_uint32_t(&bp, L, *ep);
-			}
+            END_REPETITION();
 			break;
 		case 'q':
-			CHECK_REPETITION(rep);
-			for (i = 0; i < rep; i++) {
+            BEGIN_REPETITION();
 				q = va_arg(args, int64_t*);
 				unpack_int64_t(&bp, q, *ep);
-			}
+            END_REPETITION();
 			break;
 		case 'Q':
-			CHECK_REPETITION(rep);
-			for (i = 0; i < rep; i++) {
+            BEGIN_REPETITION();
 				Q = va_arg(args, uint64_t*);
 				unpack_uint64_t(&bp, Q, *ep);
-			}
+            END_REPETITION();
 			break;
 		case 'f':
-			CHECK_REPETITION(rep);
-			for (i = 0; i < rep; i++) {
+            BEGIN_REPETITION();
 				f = va_arg(args, float*);
 				unpack_float(&bp, f, *ep);
-			}
+            END_REPETITION();
 			break;
 		case 'd':
-			CHECK_REPETITION(rep);
-			for (i = 0; i < rep; i++) {
+            BEGIN_REPETITION();
 				d = va_arg(args, double*);
 				unpack_double(&bp, d, *ep);
-			}
+            END_REPETITION();
 			break;
 		case 's': /* fall through */
 		case 'p':
-			CHECK_REPETITION(rep);
-			s = va_arg(args, char*);
-			for (i = 0; i < rep; i++) {
-				s[i] = *bp++;
-			}
+            {
+                int i = 0;
+                s = va_arg(args, char*);
+                BEGIN_REPETITION();
+                    s[i++] = *bp++;
+                END_REPETITION();
+            }
 			break;
         case 'x':
-			CHECK_REPETITION(rep);
-			for (i = 0; i < rep; i++) {
+            BEGIN_REPETITION();
                 bp++;
-            }
+            END_REPETITION();
             break;
 		default:
 			if (isdigit((int)*p)) {
-                rep = rep * 10 + (*p - '0');
+                INC_REPETITION();
 			} else {
 				return -1;
 			}
 		}
 
         if (!isdigit((int)*p)) {
-            rep = 0;
+            CLEAR_REPETITION();
         }
 	}
 	return (bp - buf);
@@ -658,9 +643,9 @@ int struct_unpack_from(int offset, void *buf, const char *fmt, ...)
 
 int struct_calcsize(const char *fmt)
 {
+    INIT_REPETITION();
 	int ret = 0;
 	const char *p;
-	int rep = 0;
 
 	if (STRUCT_ENDIAN_NOT_SET == myendian) {
 		struct_init();
@@ -674,66 +659,78 @@ int struct_calcsize(const char *fmt)
 		case '!': /* ignore endian characters */
 			break;
 		case 'b':
-			CHECK_REPETITION(rep);
-			ret += (rep * sizeof(char));
+            BEGIN_REPETITION();
+			ret += sizeof(char);
+            END_REPETITION();
 			break;
 		case 'B':
-			CHECK_REPETITION(rep);
-			ret += (rep * sizeof(unsigned char));
+            BEGIN_REPETITION();
+			ret += sizeof(unsigned char);
+            END_REPETITION();
 			break;
 		case 'h':
-			CHECK_REPETITION(rep);
-			ret += (rep * sizeof(int16_t));
+            BEGIN_REPETITION();
+			ret += sizeof(int16_t);
+            END_REPETITION();
 			break;
 		case 'H':
-			CHECK_REPETITION(rep);
-			ret += (rep * sizeof(uint16_t));
+            BEGIN_REPETITION();
+			ret += sizeof(uint16_t);
+            END_REPETITION();
 			break;
 		case 'i': /* fall through */
 		case 'l':
-			CHECK_REPETITION(rep);
-			ret += (rep * sizeof(int32_t));
+            BEGIN_REPETITION();
+			ret += sizeof(int32_t);
+            END_REPETITION();
 			break;
 		case 'I': /* fall through */
 		case 'L':
-			CHECK_REPETITION(rep);
-			ret += (rep * sizeof(uint32_t));
+            BEGIN_REPETITION();
+			ret += sizeof(uint32_t);
+            END_REPETITION();
 			break;
 		case 'q':
-			CHECK_REPETITION(rep);
-			ret += (rep * sizeof(int64_t));
+            BEGIN_REPETITION();
+			ret += sizeof(int64_t);
+            END_REPETITION();
 			break;
 		case 'Q':
-			CHECK_REPETITION(rep);
-			ret += (rep * sizeof(uint64_t));
+            BEGIN_REPETITION();
+			ret += sizeof(uint64_t);
+            END_REPETITION();
 			break;
 		case 'f':
-			CHECK_REPETITION(rep);
-			ret += (rep * sizeof(float));
+            BEGIN_REPETITION();
+			ret += sizeof(float);
+            END_REPETITION();
 			break;
 		case 'd':
-			CHECK_REPETITION(rep);
-			ret += (rep * sizeof(double));
+            BEGIN_REPETITION();
+			ret += sizeof(double);
+            END_REPETITION();
 			break;
 		case 's': /* fall through */
 		case 'p':
-			CHECK_REPETITION(rep);
-			ret += (rep * sizeof(char));
+            BEGIN_REPETITION();
+			ret += sizeof(char);
+            END_REPETITION();
 			break;
 		case 'x':
-			CHECK_REPETITION(rep);
-			ret += (rep * sizeof(char));
+            BEGIN_REPETITION();
+			ret += sizeof(char);
+            END_REPETITION();
 			break;
 		default:
 			if (isdigit((int)*p)) {
-                rep = rep * 10 + (*p - '0');
+                INC_REPETITION();
 			} else {
 				return -1;
 			}
 		}
 
         if (!isdigit((int)*p)) {
-            rep = 0;
+            CLEAR_REPETITION();
         }
 	}
 	return ret;

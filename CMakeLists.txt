@@ -21,7 +21,7 @@ link_directories ("${CMAKE_BINARY_DIR}/lib"
                   )
 
 add_library (struct SHARED
-             src/endian.c
+             src/struct_endian.c
              src/struct.c
              )
 

@@ -1,3 +1,5 @@
+#ifndef STRUCT_INCLUDED
+#define STRUCT_INCLUDED
 /*
  * struct.h
  *
@@ -125,3 +127,5 @@ extern int struct_calcsize(const char *fmt);
 #ifdef __cplusplus
 }
 #endif
+
+#endif /* !STRUCT_INCLUDED */
