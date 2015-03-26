@@ -12,6 +12,8 @@
 #include <string.h>
 #include <stdint.h>
 
+#include <limits>
+
 namespace {
 
 class Struct:public ::testing::Test {
@@ -168,6 +170,24 @@ TEST_F(Struct, int16_tPackUnpackingValid)
 	EXPECT_EQ(i, o);
 }
 
+TEST_F(Struct, int16_tLimitMinPackUnpackingValid)
+{
+	int16_t i = std::numeric_limits<int16_t>::min();
+	int16_t o;
+	struct_pack(buf, "h", i);
+	struct_unpack(buf, "h", &o);
+	EXPECT_EQ(i, o);
+}
+
+TEST_F(Struct, int16_tLimitMaxPackUnpackingValid)
+{
+	int16_t i = std::numeric_limits<int16_t>::max();
+	int16_t o;
+	struct_pack(buf, "h", i);
+	struct_unpack(buf, "h", &o);
+	EXPECT_EQ(i, o);
+}
+
 TEST_F(Struct, int16_tNegPackUnpackingValid)
 {
 	int16_t i = -1234;
@@ -215,6 +235,24 @@ TEST_F(Struct, uint16_tPackUnpackingValid)
 	EXPECT_EQ(i, o);
 }
 
+TEST_F(Struct, uint16_tLimitMinPackUnpackingValid)
+{
+	uint16_t i = std::numeric_limits<uint16_t>::min();
+	uint16_t o;
+	struct_pack(buf, "H", i);
+	struct_unpack(buf, "H", &o);
+	EXPECT_EQ(i, o);
+}
+
+TEST_F(Struct, uint16_tLimitMaxPackUnpackingValid)
+{
+	uint16_t i = std::numeric_limits<uint16_t>::max();
+	uint16_t o;
+	struct_pack(buf, "H", i);
+	struct_unpack(buf, "H", &o);
+	EXPECT_EQ(i, o);
+}
+
 TEST_F(Struct, uint16_tMultiPackUnpackingValid)
 {
 	uint16_t i = 0x1234;
@@ -247,6 +285,24 @@ TEST_F(Struct, uint16_tMultiPackUnpackingWithOffsetValid)
 TEST_F(Struct, int32_t_i_PackUnpackingValid)
 {
 	int32_t i = 0x12345678;
+	int32_t o;
+	struct_pack(buf, "i", i);
+	struct_unpack(buf, "i", &o);
+	EXPECT_EQ(i, o);
+}
+
+TEST_F(Struct, int32_t_i_LimitMinPackUnpackingValid)
+{
+	int32_t i = std::numeric_limits<int32_t>::min();
+	int32_t o;
+	struct_pack(buf, "i", i);
+	struct_unpack(buf, "i", &o);
+	EXPECT_EQ(i, o);
+}
+
+TEST_F(Struct, int32_t_i_LimitMaxPackUnpackingValid)
+{
+	int32_t i = std::numeric_limits<int32_t>::max();
 	int32_t o;
 	struct_pack(buf, "i", i);
 	struct_unpack(buf, "i", &o);
@@ -300,6 +356,24 @@ TEST_F(Struct, uint32_t_I_PackUnpackingValid)
 	EXPECT_EQ(i, o);
 }
 
+TEST_F(Struct, uint32_t_I_LimitMinPackUnpackingValid)
+{
+	uint32_t i = std::numeric_limits<uint32_t>::min();
+	uint32_t o;
+	struct_pack(buf, "I", i);
+	struct_unpack(buf, "I", &o);
+	EXPECT_EQ(i, o);
+}
+
+TEST_F(Struct, uint32_t_I_LimitMaxPackUnpackingValid)
+{
+	uint32_t i = std::numeric_limits<uint32_t>::max();
+	uint32_t o;
+	struct_pack(buf, "I", i);
+	struct_unpack(buf, "I", &o);
+	EXPECT_EQ(i, o);
+}
+
 TEST_F(Struct, uint32_t_I_MultiPackUnpackingValid)
 {
 	uint32_t i = 0x12345678;
@@ -332,6 +406,24 @@ TEST_F(Struct, uint32_t_I_MultiPackUnpackingWithOffsetValid)
 TEST_F(Struct, int32_t_l_PackUnpackingValid)
 {
 	int32_t i = 0x12345678;
+	int32_t o;
+	struct_pack(buf, "l", i);
+	struct_unpack(buf, "l", &o);
+	EXPECT_EQ(i, o);
+}
+
+TEST_F(Struct, int32_t_l_LimitMinPackUnpackingValid)
+{
+	int32_t i = std::numeric_limits<int32_t>::min();
+	int32_t o;
+	struct_pack(buf, "l", i);
+	struct_unpack(buf, "l", &o);
+	EXPECT_EQ(i, o);
+}
+
+TEST_F(Struct, int32_t_l_LimitMaxPackUnpackingValid)
+{
+	int32_t i = std::numeric_limits<int32_t>::max();
 	int32_t o;
 	struct_pack(buf, "l", i);
 	struct_unpack(buf, "l", &o);
@@ -385,6 +477,24 @@ TEST_F(Struct, uint32_t_L_PackUnpackingValid)
 	EXPECT_EQ(i, o);
 }
 
+TEST_F(Struct, uint32_t_L_LimitMinPackUnpackingValid)
+{
+	uint32_t i = std::numeric_limits<uint32_t>::min();
+	uint32_t o;
+	struct_pack(buf, "L", i);
+	struct_unpack(buf, "L", &o);
+	EXPECT_EQ(i, o);
+}
+
+TEST_F(Struct, uint32_t_L_LimitMaxPackUnpackingValid)
+{
+	uint32_t i = std::numeric_limits<uint32_t>::max();
+	uint32_t o;
+	struct_pack(buf, "L", i);
+	struct_unpack(buf, "L", &o);
+	EXPECT_EQ(i, o);
+}
+
 TEST_F(Struct, uint32_t_L_MultiPackUnpackingValid)
 {
 	uint32_t i = 0x12345678;
@@ -417,6 +527,24 @@ TEST_F(Struct, uint32_t_L_MultiPackUnpackingWithOffsetValid)
 TEST_F(Struct, int64_tPackUnpackingValid)
 {
 	int64_t i = 0x1234567887654321LL;
+	int64_t o;
+	struct_pack(buf, "q", i);
+	struct_unpack(buf, "q", &o);
+	EXPECT_EQ(i, o);
+}
+
+TEST_F(Struct, int64_t_LimitMinPackUnpackingValid)
+{
+	int64_t i = std::numeric_limits<int64_t>::min();
+	int64_t o;
+	struct_pack(buf, "q", i);
+	struct_unpack(buf, "q", &o);
+	EXPECT_EQ(i, o);
+}
+
+TEST_F(Struct, int64_t_LimitMaxPackUnpackingValid)
+{
+	int64_t i = std::numeric_limits<int64_t>::max();
 	int64_t o;
 	struct_pack(buf, "q", i);
 	struct_unpack(buf, "q", &o);
@@ -464,6 +592,24 @@ TEST_F(Struct, int64_t_MultiPackUnpackingWithOffsetValid)
 TEST_F(Struct, uint64_tPackUnpackingValid)
 {
 	uint64_t i = 0x1234567887654321LL;
+	uint64_t o;
+	struct_pack(buf, "Q", i);
+	struct_unpack(buf, "Q", &o);
+	EXPECT_EQ(i, o);
+}
+
+TEST_F(Struct, uint64_t_LimitMinPackUnpackingValid)
+{
+	uint64_t i = std::numeric_limits<uint64_t>::min();
+	uint64_t o;
+	struct_pack(buf, "Q", i);
+	struct_unpack(buf, "Q", &o);
+	EXPECT_EQ(i, o);
+}
+
+TEST_F(Struct, uint64_t_LimitMaxPackUnpackingValid)
+{
+	uint64_t i = std::numeric_limits<uint64_t>::max();
 	uint64_t o;
 	struct_pack(buf, "Q", i);
 	struct_unpack(buf, "Q", &o);
