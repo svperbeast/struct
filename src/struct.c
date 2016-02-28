@@ -177,7 +177,7 @@ static void pack_double(unsigned char **bp, double val, int endian)
     pack_int64_t(bp, ieee754_encoded_val, endian);
 }
 
-static void unpack_int16_t(unsigned char **bp, int16_t *dst, int endian)
+static void unpack_int16_t(const unsigned char **bp, int16_t *dst, int endian)
 {
     uint16_t val;
     if (endian == myendian) {
@@ -194,7 +194,7 @@ static void unpack_int16_t(unsigned char **bp, int16_t *dst, int endian)
     }
 }
 
-static void unpack_uint16_t(unsigned char **bp, uint16_t *dst, int endian)
+static void unpack_uint16_t(const unsigned char **bp, uint16_t *dst, int endian)
 {
     if (endian == myendian) {
         *dst = *((*bp)++);
@@ -205,7 +205,7 @@ static void unpack_uint16_t(unsigned char **bp, uint16_t *dst, int endian)
     }
 }
 
-static void unpack_int32_t(unsigned char **bp, int32_t *dst, int endian)
+static void unpack_int32_t(const unsigned char **bp, int32_t *dst, int endian)
 {
     uint32_t val;
     if (endian == myendian) {
@@ -226,7 +226,7 @@ static void unpack_int32_t(unsigned char **bp, int32_t *dst, int endian)
     }
 }
 
-static void unpack_uint32_t(unsigned char **bp, uint32_t *dst, int endian)
+static void unpack_uint32_t(const unsigned char **bp, uint32_t *dst, int endian)
 {
     if (endian == myendian) {
         *dst = *((*bp)++);
@@ -241,7 +241,7 @@ static void unpack_uint32_t(unsigned char **bp, uint32_t *dst, int endian)
     }
 }
 
-static void unpack_int64_t(unsigned char **bp, int64_t *dst, int endian)
+static void unpack_int64_t(const unsigned char **bp, int64_t *dst, int endian)
 {
     uint64_t val;
     if (endian == myendian) {
@@ -270,7 +270,7 @@ static void unpack_int64_t(unsigned char **bp, int64_t *dst, int endian)
     }
 }
 
-static void unpack_uint64_t(unsigned char **bp, uint64_t *dst, int endian)
+static void unpack_uint64_t(const unsigned char **bp, uint64_t *dst, int endian)
 {
     if (endian == myendian) {
         *dst = *((*bp)++);
@@ -293,14 +293,14 @@ static void unpack_uint64_t(unsigned char **bp, uint64_t *dst, int endian)
     }
 }
 
-static void unpack_float(unsigned char **bp, float *dst, int endian)
+static void unpack_float(const unsigned char **bp, float *dst, int endian)
 {
     uint32_t ieee754_encoded_val = 0;
     unpack_uint32_t(bp, &ieee754_encoded_val, endian);
     *dst = UNPACK_IEEE754_32(ieee754_encoded_val);
 }
 
-static void unpack_double(unsigned char **bp, double *dst, int endian)
+static void unpack_double(const unsigned char **bp, double *dst, int endian)
 {
     uint64_t ieee754_encoded_val = 0;
     unpack_uint64_t(bp, &ieee754_encoded_val, endian);
@@ -448,12 +448,15 @@ static int pack_va_list(unsigned char *buf, int offset, const char *fmt,
     return (bp - buf);
 }
 
-static int unpack_va_list(unsigned char *buf, int offset, const char *fmt,
-                     va_list args)
+static int unpack_va_list(
+    const unsigned char *buf,
+    int offset,
+    const char *fmt,
+    va_list args)
 {
     INIT_REPETITION();
     const char *p;
-    unsigned char *bp;
+    const unsigned char *bp;
     int *ep = &myendian;
     int endian;
 
@@ -615,27 +618,27 @@ int struct_pack_into(int offset, void *buf, const char *fmt, ...)
     return packed_len;
 }
 
-int struct_unpack(void *buf, const char *fmt, ...)
+int struct_unpack(const void *buf, const char *fmt, ...)
 {
     va_list args;
     int unpacked_len = 0;
 
     va_start(args, fmt);
     unpacked_len = unpack_va_list(
-            (unsigned char*)buf, 0, fmt, args);
+            (const unsigned char*)buf, 0, fmt, args);
     va_end(args);
 
     return unpacked_len;
 }
 
-int struct_unpack_from(int offset, void *buf, const char *fmt, ...)
+int struct_unpack_from(int offset, const void *buf, const char *fmt, ...)
 {
     va_list args;
     int unpacked_len = 0;
 
     va_start(args, fmt);
     unpacked_len = unpack_va_list(
-            (unsigned char*)buf, offset, fmt, args);
+            (const unsigned char*)buf, offset, fmt, args);
     va_end(args);
 
     return unpacked_len;

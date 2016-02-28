@@ -107,13 +107,17 @@ extern int struct_pack_into(int offset, void *buf, const char *fmt, ...);
  * @brief unpack data
  * @return the number of bytes decoded on success, -1 on failure.
  */
-extern int struct_unpack(void *buf, const char *fmt, ...);
+extern int struct_unpack(const void *buf, const char *fmt, ...);
 
 /**
  * @brief unpack data with offset
  * @return updated offset on success, -1 on failure.
  */
-extern int struct_unpack_from(int offset, void *buf, const char *fmt, ...);
+extern int struct_unpack_from(
+    int offset,
+    const void *buf,
+    const char *fmt,
+    ...);
 
 /**
  * @brief calculate the size of a format string
