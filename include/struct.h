@@ -92,7 +92,7 @@ extern "C" {
 #endif
 
 /* simple size macros
- * the sizes of signed/unsigned are the same.
+ * the standard sizes of signed/unsigned are the same.
  */
 #define STRUCT_BSIZE 1
 #define STRUCT_HSIZE 2
@@ -109,7 +109,7 @@ extern int struct_pack(void *buf, const char *fmt, ...);
 
 /**
  * @brief pack data with offset
- * @return updated offset on success, -1 on failure.
+ * @return the number of bytes encoded on success, -1 on failure.
  */
 extern int struct_pack_into(int offset, void *buf, const char *fmt, ...);
 
@@ -121,7 +121,7 @@ extern int struct_unpack(const void *buf, const char *fmt, ...);
 
 /**
  * @brief unpack data with offset
- * @return updated offset on success, -1 on failure.
+ * @return the number of bytes decoded on success, -1 on failure.
  */
 extern int struct_unpack_from(
     int offset,
