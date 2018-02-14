@@ -32,7 +32,16 @@ set_target_properties (struct PROPERTIES
                        "${CMAKE_C_FLAGS} -O2 -Wall -W"
                        )
 
-install (TARGETS struct DESTINATION "${CMAKE_BINARY_DIR}/release/lib")
+install (TARGETS
+           struct
+         PERMISSIONS
+           OWNER_READ OWNER_WRITE OWNER_EXECUTE
+           GROUP_READ GROUP_WRITE GROUP_EXECUTE
+           WORLD_READ WORLD_EXECUTE
+         DESTINATION
+           "${CMAKE_BINARY_DIR}/release/lib"
+        )
+
 install (FILES
          "${struct_SOURCE_DIR}/include/struct.h"
          DESTINATION
