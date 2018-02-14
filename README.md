@@ -77,9 +77,8 @@ struct_unpack(buf2, fmt, rstr);
     make
     make install
 
-headers: `build/export/include/`.
-
-library: `build/export/lib/`.
+headers: `build/release/include/struct/`.
+library: `build/release/lib/`.
 
 ## Test
 
