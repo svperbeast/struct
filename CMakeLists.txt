@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 2.8)
+cmake_minimum_required (VERSION 2.8.8)
 
 project (struct)
 
@@ -40,7 +40,21 @@ install (TARGETS
            WORLD_READ WORLD_EXECUTE
          DESTINATION
            "${CMAKE_BINARY_DIR}/release/lib"
+         EXPORT
+           struct
         )
+
+export (
+  TARGETS
+    struct
+  FILE
+    "${CMAKE_BINARY_DIR}/struct-config.cmake"
+)
+
+export (
+  PACKAGE
+    struct
+)
 
 install (FILES
          "${struct_SOURCE_DIR}/include/struct.h"
