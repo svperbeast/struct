@@ -72,6 +72,7 @@ struct_unpack(buf2, fmt, rstr);
 
 # Install
 
+    mkdir build
     cd build
     cmake ..
     make
