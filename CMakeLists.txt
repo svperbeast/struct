@@ -93,10 +93,17 @@ add_library (struct
              src/struct.c
              )
 
-set_target_properties (struct PROPERTIES
-                       COMPILE_FLAGS
-                       "${CMAKE_C_FLAGS} -O2 -Wall -W"
-                       )
+if ("${CMAKE_C_COMPILER_ID}" STREQUAL "MSVC")
+    set_target_properties (struct PROPERTIES
+                           COMPILE_FLAGS
+                           "${CMAKE_C_FLAGS} -O2 -Wall"
+                           )
+else ()
+    set_target_properties (struct PROPERTIES
+                           COMPILE_FLAGS
+                           "${CMAKE_C_FLAGS} -O2 -Wall -W"
+                           )
+endif ()
 
 install (TARGETS
            struct
