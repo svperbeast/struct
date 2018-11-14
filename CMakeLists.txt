@@ -12,6 +12,8 @@ find_package (Threads REQUIRED)
 option (STRUCT_BUILD_TEST "build googletest and test programs" OFF)
 
 if (STRUCT_BUILD_TEST)
+    set (CMAKE_CXX_STANDARD 11)
+
     include (ExternalProject)
 
     # googletest
@@ -31,7 +33,7 @@ if (STRUCT_BUILD_TEST)
 
     ExternalProject_Get_Property (googletest binary_dir)
     set (GTEST_LIBRARY_PATH
-        "${binary_dir}/googlemock/gtest/${CMAKE_FIND_LIBRARY_PREFIXES}gtest.a"
+        "${binary_dir}/lib/${CMAKE_FIND_LIBRARY_PREFIXES}gtest.a"
         )
     set (GTEST_LIBRARY gtest)
 
@@ -43,7 +45,7 @@ if (STRUCT_BUILD_TEST)
     add_dependencies (${GTEST_LIBRARY} googletest)
 
     set (GTEST_MAIN_LIBRARY_PATH
-        "${binary_dir}/googlemock/gtest/${CMAKE_FIND_LIBRARY_PREFIXES}gtest_main.a"
+        "${binary_dir}/lib/${CMAKE_FIND_LIBRARY_PREFIXES}gtest_main.a"
         )
     set (GTEST_MAIN_LIBRARY gtest_main)
     add_library (${GTEST_MAIN_LIBRARY} UNKNOWN IMPORTED)
@@ -54,7 +56,7 @@ if (STRUCT_BUILD_TEST)
     add_dependencies (${GTEST_MAIN_LIBRARY} googletest)
 
     set (GMOCK_LIBRARY_PATH
-        "${binary_dir}/googlemock/gtest/${CMAKE_FIND_LIBRARY_PREFIXES}gmock.a"
+        "${binary_dir}/lib/${CMAKE_FIND_LIBRARY_PREFIXES}gmock.a"
         )
     set (GMOCK_LIBRARY gmock)
     add_library (${GMOCK_LIBRARY} UNKNOWN IMPORTED)
@@ -65,7 +67,7 @@ if (STRUCT_BUILD_TEST)
     add_dependencies (${GMOCK_LIBRARY} googletest)
 
     set (GMOCK_MAIN_LIBRARY_PATH
-        "${binary_dir}/googlemock/gtest/${CMAKE_FIND_LIBRARY_PREFIXES}gmock_main.a"
+        "${binary_dir}/lib/${CMAKE_FIND_LIBRARY_PREFIXES}gmock_main.a"
         )
     set (GMOCK_MAIN_LIBRARY gmock_main)
     add_library (${GMOCK_MAIN_LIBRARY} UNKNOWN IMPORTED)
@@ -84,9 +86,6 @@ include_directories ("${struct_SOURCE_DIR}/include"
                      ${GTEST_INCLUDE_DIRS}
                      ${GMOCK_INCLUDE_DIRS}
                      )
-
-link_directories ("${CMAKE_BINARY_DIR}/lib"
-                  )
 
 add_library (struct
              src/struct_endian.c
