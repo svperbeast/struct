@@ -7,6 +7,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <errno.h>
+#include <math.h> // IEEE754 floating point
 
 // refer to
 // http://beej.us/guide/bgnet/output/html/singlepage/bgnet.html#serialization
@@ -35,7 +36,7 @@ static void struct_init(void)
     myendian = struct_get_endian();
 }
 
-static unsigned long long pack_ieee754(long double f,
+static uint64_t pack_ieee754(long double f,
         unsigned int bits, unsigned int expbits)
 {
     long double fnorm;
@@ -44,6 +45,20 @@ static unsigned long long pack_ieee754(long double f,
     long long exp;
     long long significand;
     unsigned int significandbits = bits - expbits - 1; // -1 for sign bit
+
+    if (isinf(f)) {
+      // isinf(f) returns 1 if f is positive infinity,
+      //                  -1 if f is negative infinity.
+      union { uint64_t u; double f; } ieee754;
+      ieee754.f = INFINITY * isinf(f); // returns IEEE754 +/- infinity
+      return ieee754.u;
+    }
+
+    if (isnan(f)) {
+      union { uint64_t u; double f; } ieee754;
+      ieee754.f = NAN; // returns IEEE754 not a number
+      return ieee754.u;
+    }
 
     if (f == 0.0) {
         return 0; // get this special case out of the way
@@ -81,13 +96,25 @@ static unsigned long long pack_ieee754(long double f,
     return (sign << (bits - 1U)) | (exp << (bits - expbits - 1U)) | significand;
 }
 
-static long double unpack_ieee754(unsigned long long int i,
+static long double unpack_ieee754(uint64_t i,
         unsigned int bits, unsigned int expbits)
 {
     long double result;
     long long shift;
     unsigned int bias;
     unsigned int significandbits = bits - expbits - 1; // -1 for sign bit
+
+    union { uint64_t u; double f; } ieee754;
+    ieee754.u = i;
+
+    if (isnan(ieee754.f)) {
+      return NAN;
+    }
+
+    int isinf_ret = isinf(ieee754.f);
+    if (isinf_ret) {
+      return INFINITY * isinf_ret;
+    }
 
     if (i == 0) {
         return 0.0;
@@ -168,6 +195,22 @@ static void pack_int64_t(unsigned char **bp, uint64_t val, int endian)
 static void pack_float(unsigned char **bp, float val, int endian)
 {
     uint64_t ieee754_encoded_val = PACK_IEEE754_32(val);
+
+    union { uint64_t u; double f; } ieee754;
+    ieee754.u = ieee754_encoded_val;
+
+    int isinf_ret = isinf(ieee754.f);
+    if (isinf_ret) {
+      ieee754.f = INFINITY * isinf_ret;
+      ieee754_encoded_val = ieee754.u >> 32;
+    }
+
+    if (isnan(ieee754.f)) {
+      union { uint64_t u; double f; } ieee754;
+      ieee754.f = NAN;
+      ieee754_encoded_val = ieee754.u >> 32;
+    }
+
     pack_int32_t(bp, ieee754_encoded_val, endian);
 }
 
@@ -295,8 +338,22 @@ static void unpack_uint64_t(const unsigned char **bp, uint64_t *dst, int endian)
 
 static void unpack_float(const unsigned char **bp, float *dst, int endian)
 {
-    uint32_t ieee754_encoded_val = 0;
-    unpack_uint32_t(bp, &ieee754_encoded_val, endian);
+    uint64_t ieee754_encoded_val = 0;
+    uint32_t x = 0;
+    unpack_uint32_t(bp, &x, endian);
+    ieee754_encoded_val = x;
+
+    union { uint64_t u; double f; } ieee754;
+    ieee754.u = ieee754_encoded_val << 32;
+
+    if (isnan(ieee754.f)) {
+      ieee754_encoded_val = ieee754.u;
+    }
+
+    if (isinf(ieee754.f)) {
+      ieee754_encoded_val = ieee754.u;
+    }
+
     *dst = UNPACK_IEEE754_32(ieee754_encoded_val);
 }
 

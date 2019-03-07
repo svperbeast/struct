@@ -1,6 +1,11 @@
 cmake_minimum_required (VERSION 3.1)
 
-project (struct)
+project (struct LANGUAGES C CXX)
+
+set (CMAKE_C_STANDARD 99)
+set (CMAKE_C_EXTENSIONS OFF)
+set (CMAKE_C_STANDARD_REQUIRED ON)
+
 #
 # [Option(s)]
 # STRUCT_BUILD_TEST: build googletest and test programs

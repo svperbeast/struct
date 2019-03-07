@@ -13,23 +13,24 @@
 #include <stdint.h>
 
 #include <limits>
+#include <math.h>
 
 namespace {
 
 class Struct:public ::testing::Test {
 protected:
-    Struct() {}
-    virtual ~Struct() {}
+  Struct() {}
+  virtual ~Struct() {}
 
-    virtual void SetUp()
-    {
-		memset(buf, 0, sizeof(buf));
-    }
+  virtual void SetUp()
+  {
+    memset(buf, 0, sizeof(buf));
+  }
 
-    virtual void TearDown() {}
+  virtual void TearDown() {}
 
-	unsigned char buf[BUFSIZ];
-	static const char c;
+  unsigned char buf[BUFSIZ];
+  static const char c;
 };
 
 const char Struct::c = 'a';
@@ -1244,6 +1245,114 @@ TEST_F(Struct, ExamplePacketPackUnpackingWithOffsetValid)
 	EXPECT_TRUE(count == ocount);
 	EXPECT_TRUE(val == oval);
 	EXPECT_TRUE(data == odata);
+}
+
+TEST_F(Struct, HandleFloatInf)
+{
+	float i = 1.0 / 0.0;
+	float o;
+	struct_pack(buf, "f", i);
+	struct_unpack(buf, "f", &o);
+	EXPECT_DOUBLE_EQ(i, o);
+}
+
+TEST_F(Struct, HandleFloatNegativeInf)
+{
+	float i = -1.0 / 0.0;
+	float o;
+	struct_pack(buf, "f", i);
+	struct_unpack(buf, "f", &o);
+	EXPECT_DOUBLE_EQ(i, o);
+}
+
+TEST_F(Struct, HandleFloatInfBigEndian)
+{
+	float i = 1.0 / 0.0;
+	float o;
+	struct_pack(buf, "!f", i);
+	struct_unpack(buf, "!f", &o);
+	EXPECT_DOUBLE_EQ(i, o);
+}
+
+TEST_F(Struct, HandleFloatNegativeInfBigEndian)
+{
+	float i = -1.0 / 0.0;
+	float o;
+	struct_pack(buf, "!f", i);
+	struct_unpack(buf, "!f", &o);
+	EXPECT_DOUBLE_EQ(i, o);
+}
+
+TEST_F(Struct, HandleDoubleInf)
+{
+	double i = 1.0 / 0.0;
+	double o;
+	struct_pack(buf, "d", i);
+	struct_unpack(buf, "d", &o);
+	EXPECT_DOUBLE_EQ(i, o);
+}
+
+TEST_F(Struct, HandleDoubleNegativeInf)
+{
+	double i = -1.0 / 0.0;
+	double o;
+	struct_pack(buf, "d", i);
+	struct_unpack(buf, "d", &o);
+	EXPECT_DOUBLE_EQ(i, o);
+}
+
+TEST_F(Struct, HandleDoubleInfBigEndian)
+{
+	double i = 1.0 / 0.0;
+	double o;
+	struct_pack(buf, "!d", i);
+	struct_unpack(buf, "!d", &o);
+	EXPECT_DOUBLE_EQ(i, o);
+}
+
+TEST_F(Struct, HandleDoubleNegativeInfBigEndian)
+{
+	double i = -1.0 / 0.0;
+	double o;
+	struct_pack(buf, "!d", i);
+	struct_unpack(buf, "!d", &o);
+	EXPECT_DOUBLE_EQ(i, o);
+}
+
+TEST_F(Struct, HandleFloatNan)
+{
+	float i = 0.0 / 0.0;
+	float o;
+	struct_pack(buf, "f", i);
+	struct_unpack(buf, "f", &o);
+  EXPECT_TRUE(i != o); // NaN != NaN => true
+}
+
+TEST_F(Struct, HandleFloatNanBigEndian)
+{
+	float i = 0.0 / 0.0;
+	float o;
+	struct_pack(buf, "!f", i);
+	struct_unpack(buf, "!f", &o);
+  EXPECT_TRUE(i != o); // NaN != NaN => true
+}
+
+TEST_F(Struct, HandleDoubleNan)
+{
+	double i = 0.0 / 0.0;
+	double o;
+	struct_pack(buf, "d", i);
+	struct_unpack(buf, "d", &o);
+  EXPECT_TRUE(i != o); // NaN != NaN => true
+}
+
+TEST_F(Struct, HandleDoubleNanBigEndian)
+{
+	double i = 0.0 / 0.0;
+	double o;
+	struct_pack(buf, "!d", i);
+	struct_unpack(buf, "!d", &o);
+  EXPECT_TRUE(i != o); // NaN != NaN => true
 }
 
 } // namespace
