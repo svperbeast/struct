@@ -7,7 +7,15 @@
 #include <string.h>
 #include <ctype.h>
 #include <errno.h>
-#include <math.h> // IEEE754 floating point
+#include <math.h>
+
+#define IEEE754_32_NAN     0x7FC00000
+#define IEEE754_32_INF     0x7F800000
+#define IEEE754_32_NEG_INF 0xFF800000
+
+#define IEEE754_64_NAN     0x7FF8000000000000
+#define IEEE754_64_INF     0x7FF0000000000000
+#define IEEE754_64_NEG_INF 0xFFF0000000000000
 
 // refer to
 // http://beej.us/guide/bgnet/output/html/singlepage/bgnet.html#serialization
@@ -46,18 +54,23 @@ static uint64_t pack_ieee754(long double f,
     long long significand;
     unsigned int significandbits = bits - expbits - 1; // -1 for sign bit
 
-    if (isinf(f)) {
+    int isinf_ret = isinf(f);
+    if (isinf_ret != 0) {
       // isinf(f) returns 1 if f is positive infinity,
       //                  -1 if f is negative infinity.
-      union { uint64_t u; double f; } ieee754;
-      ieee754.f = INFINITY * isinf(f); // returns IEEE754 +/- infinity
-      return ieee754.u;
+      if (bits == 32) {
+        return (isinf_ret == 1) ? IEEE754_32_INF : IEEE754_32_NEG_INF;
+      } else {
+        return (isinf_ret == 1) ? IEEE754_64_INF : IEEE754_64_NEG_INF;
+      }
     }
 
     if (isnan(f)) {
-      union { uint64_t u; double f; } ieee754;
-      ieee754.f = NAN; // returns IEEE754 not a number
-      return ieee754.u;
+      if (bits == 32) {
+        return IEEE754_32_NAN;
+      } else {
+        return IEEE754_64_NAN;
+      }
     }
 
     if (f == 0.0) {
@@ -104,20 +117,34 @@ static long double unpack_ieee754(uint64_t i,
     unsigned int bias;
     unsigned int significandbits = bits - expbits - 1; // -1 for sign bit
 
-    union { uint64_t u; double f; } ieee754;
-    ieee754.u = i;
-
-    if (isnan(ieee754.f)) {
-      return NAN;
-    }
-
-    int isinf_ret = isinf(ieee754.f);
-    if (isinf_ret) {
-      return INFINITY * isinf_ret;
-    }
-
     if (i == 0) {
         return 0.0;
+    }
+
+    if (bits == 32) {
+      if (i == IEEE754_32_NAN) {
+        return NAN;
+      }
+
+      if (i == IEEE754_32_INF) {
+        return INFINITY;
+      }
+
+      if (i == IEEE754_32_NEG_INF) {
+        return -INFINITY;
+      }
+    } else {
+      if (i == IEEE754_64_NAN) {
+        return NAN;
+      }
+
+      if (i == IEEE754_64_INF) {
+        return INFINITY;
+      }
+
+      if (i == IEEE754_64_NEG_INF) {
+        return -INFINITY;
+      }
     }
 
     // pull the significand
@@ -195,22 +222,6 @@ static void pack_int64_t(unsigned char **bp, uint64_t val, int endian)
 static void pack_float(unsigned char **bp, float val, int endian)
 {
     uint64_t ieee754_encoded_val = PACK_IEEE754_32(val);
-
-    union { uint64_t u; double f; } ieee754;
-    ieee754.u = ieee754_encoded_val;
-
-    int isinf_ret = isinf(ieee754.f);
-    if (isinf_ret) {
-      ieee754.f = INFINITY * isinf_ret;
-      ieee754_encoded_val = ieee754.u >> 32;
-    }
-
-    if (isnan(ieee754.f)) {
-      union { uint64_t u; double f; } ieee754;
-      ieee754.f = NAN;
-      ieee754_encoded_val = ieee754.u >> 32;
-    }
-
     pack_int32_t(bp, ieee754_encoded_val, endian);
 }
 
@@ -338,22 +349,8 @@ static void unpack_uint64_t(const unsigned char **bp, uint64_t *dst, int endian)
 
 static void unpack_float(const unsigned char **bp, float *dst, int endian)
 {
-    uint64_t ieee754_encoded_val = 0;
-    uint32_t x = 0;
-    unpack_uint32_t(bp, &x, endian);
-    ieee754_encoded_val = x;
-
-    union { uint64_t u; double f; } ieee754;
-    ieee754.u = ieee754_encoded_val << 32;
-
-    if (isnan(ieee754.f)) {
-      ieee754_encoded_val = ieee754.u;
-    }
-
-    if (isinf(ieee754.f)) {
-      ieee754_encoded_val = ieee754.u;
-    }
-
+    uint32_t ieee754_encoded_val = 0;
+    unpack_uint32_t(bp, &ieee754_encoded_val, endian);
     *dst = UNPACK_IEEE754_32(ieee754_encoded_val);
 }
 
