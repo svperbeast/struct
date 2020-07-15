@@ -2,7 +2,7 @@
  * struct_test.cpp
  *
  *  Created on: 2011. 5. 6.
- *      Author: Wonseok
+ *      Author: wonseok choi
  */
 
 #include "struct.h"
@@ -1325,7 +1325,7 @@ TEST_F(Struct, HandleFloatNan)
 	float o;
 	struct_pack(buf, "f", i);
 	struct_unpack(buf, "f", &o);
-  EXPECT_TRUE(i != o); // NaN != NaN => true
+	EXPECT_TRUE(i != o); // NaN != NaN => true
 }
 
 TEST_F(Struct, HandleFloatNanBigEndian)
@@ -1334,7 +1334,7 @@ TEST_F(Struct, HandleFloatNanBigEndian)
 	float o;
 	struct_pack(buf, "!f", i);
 	struct_unpack(buf, "!f", &o);
-  EXPECT_TRUE(i != o); // NaN != NaN => true
+	EXPECT_TRUE(i != o); // NaN != NaN => true
 }
 
 TEST_F(Struct, HandleDoubleNan)
@@ -1343,7 +1343,7 @@ TEST_F(Struct, HandleDoubleNan)
 	double o;
 	struct_pack(buf, "d", i);
 	struct_unpack(buf, "d", &o);
-  EXPECT_TRUE(i != o); // NaN != NaN => true
+	EXPECT_TRUE(i != o); // NaN != NaN => true
 }
 
 TEST_F(Struct, HandleDoubleNanBigEndian)
@@ -1352,13 +1352,13 @@ TEST_F(Struct, HandleDoubleNanBigEndian)
 	double o;
 	struct_pack(buf, "!d", i);
 	struct_unpack(buf, "!d", &o);
-  EXPECT_TRUE(i != o); // NaN != NaN => true
+	EXPECT_TRUE(i != o); // NaN != NaN => true
 }
 
 } // namespace
 
 int main(int argc, char *argv[])
 {
-    ::testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
+  ::testing::InitGoogleTest(&argc, argv);
+  return RUN_ALL_TESTS();
 }

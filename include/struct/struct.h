@@ -91,16 +91,6 @@
 extern "C" {
 #endif
 
-/* simple size macros
- * the standard sizes of signed/unsigned are the same.
- */
-#define STRUCT_BSIZE 1
-#define STRUCT_HSIZE 2
-#define STRUCT_ISIZE 4
-#define STRUCT_QSIZE 8
-#define STRUCT_FSIZE 4
-#define STRUCT_DSIZE 8
-
 /**
  * @brief pack data
  * @return the number of bytes encoded on success, -1 on failure.
