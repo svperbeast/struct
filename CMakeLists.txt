@@ -25,6 +25,7 @@ if (STRUCT_BUILD_TEST)
     ExternalProject_Add (
         googletest
         GIT_REPOSITORY https://github.com/google/googletest.git
+        GIT_TAG release-1.10.0
         UPDATE_COMMAND ""
         INSTALL_COMMAND ""
         LOG_DOWNLOAD ON

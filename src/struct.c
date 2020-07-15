@@ -717,12 +717,12 @@ int struct_calcsize(const char *fmt)
             break;
         case 'b':
             BEGIN_REPETITION();
-            ret += sizeof(char);
+            ret += sizeof(int8_t);
             END_REPETITION();
             break;
         case 'B':
             BEGIN_REPETITION();
-            ret += sizeof(unsigned char);
+            ret += sizeof(uint8_t);
             END_REPETITION();
             break;
         case 'h':
@@ -759,23 +759,23 @@ int struct_calcsize(const char *fmt)
             break;
         case 'f':
             BEGIN_REPETITION();
-            ret += sizeof(float);
+            ret += sizeof(int32_t); // see pack_float()
             END_REPETITION();
             break;
         case 'd':
             BEGIN_REPETITION();
-            ret += sizeof(double);
+            ret += sizeof(int64_t); // see pack_double()
             END_REPETITION();
             break;
         case 's': /* fall through */
         case 'p':
             BEGIN_REPETITION();
-            ret += sizeof(char);
+            ret += sizeof(int8_t);
             END_REPETITION();
             break;
         case 'x':
             BEGIN_REPETITION();
-            ret += sizeof(char);
+            ret += sizeof(int8_t);
             END_REPETITION();
             break;
         default:
