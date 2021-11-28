@@ -83,6 +83,8 @@ library: `build/release/lib/`.
 
 ## Test
 
+    cmake -DSTRUCT_BUILD_TEST=ON ..
+    make
     make test
 
 or run `struct_test`.

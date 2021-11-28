@@ -1355,6 +1355,23 @@ TEST_F(Struct, HandleDoubleNanBigEndian)
 	EXPECT_TRUE(i != o); // NaN != NaN => true
 }
 
+TEST_F(Struct, PackUnpackingStringUsingSameBuffer)
+{
+	char str[32];
+	char fmt[32];
+
+	memset(str, 0, sizeof(str));
+	memset(fmt, 0, sizeof(fmt));
+
+	strcpy(str, "test");
+	snprintf(fmt, sizeof(fmt), "%ds", (int)strlen(str));
+	// checking the result of snprintf() omitted..
+
+	struct_pack(str, fmt, str);
+	struct_unpack(str, fmt, str);
+	EXPECT_STREQ(str, "test");
+}
+
 } // namespace
 
 int main(int argc, char *argv[])
