@@ -231,6 +231,21 @@ static void pack_double(unsigned char **bp, double val, int endian)
     pack_int64_t(bp, ieee754_encoded_val, endian);
 }
 
+static void pack_varint(unsigned char **bp, uint64_t val, int endian)
+{
+    for (size_t bytes = 0; val >= 0x80 && bytes < 10; val >>= 7, bytes++)
+        *((*bp)++) = val | 0x80;
+    *((*bp)++) = val;
+}
+
+static void pack_signed_varint(unsigned char **bp, int64_t val, int endian)
+{
+    uint64_t uval = (uint64_t)val << 1ull;
+    if (val < 0)
+        uval = ~uval;
+    pack_varint(bp, uval, endian);
+}
+
 static void unpack_int16_t(const unsigned char **bp, int16_t *dst, int endian)
 {
     uint16_t val;
@@ -361,6 +376,26 @@ static void unpack_double(const unsigned char **bp, double *dst, int endian)
     *dst = UNPACK_IEEE754_64(ieee754_encoded_val);
 }
 
+static void unpack_varint(const unsigned char **bp, uint64_t *dst, int endian)
+{
+    *dst = 0;
+    for (size_t bits = 0; bits <= 63; bits += 7, (*bp)++) {
+        *dst |= (uint64_t)((*bp)[0] & 0x7f) << bits;
+        if (!((*bp)[0] & 0x80))
+            break;
+    }
+    (*bp)++;
+}
+
+static void unpack_signed_varint(const unsigned char **bp, int64_t *dst, int endian)
+{
+    uint64_t uval;
+    unpack_varint(bp, &uval, endian);
+    *dst = (int64_t)(uval >> 1);
+    if ((uval & 1) != 0)
+        *dst = ~*dst;
+}
+
 static int pack_va_list(unsigned char *buf, int offset, const char *fmt,
                           va_list args)
 {
@@ -381,6 +416,8 @@ static int pack_va_list(unsigned char *buf, int offset, const char *fmt,
     float f;
     double d;
     char *s;
+    int64_t v;
+    uint64_t V;
 
     if (STRUCT_ENDIAN_NOT_SET == myendian) {
         struct_init();
@@ -487,6 +524,18 @@ static int pack_va_list(unsigned char *buf, int offset, const char *fmt,
                 *bp++ = 0;
             END_REPETITION();
             break;
+        case 'v':
+            BEGIN_REPETITION();
+            v = va_arg(args, int64_t);
+            pack_signed_varint(&bp, v, *ep);
+            END_REPETITION();
+            break;
+        case 'V':
+            BEGIN_REPETITION();
+            V = va_arg(args, uint64_t);
+            pack_varint(&bp, V, *ep);
+            END_REPETITION();
+            break;
         default:
             if (isdigit((int)*p)) {
                 INC_REPETITION();
@@ -525,6 +574,8 @@ static int unpack_va_list(
     float *f;
     double *d;
     char *s;
+    int64_t *v;
+    uint64_t *V;
 
     if (STRUCT_ENDIAN_NOT_SET == myendian) {
         struct_init();
@@ -623,6 +674,18 @@ static int unpack_va_list(
         case 'x':
             BEGIN_REPETITION();
                 bp++;
+            END_REPETITION();
+            break;
+        case 'v':
+            BEGIN_REPETITION();
+            v = va_arg(args, int64_t*);
+            unpack_signed_varint(&bp, v, *ep);
+            END_REPETITION();
+            break;
+        case 'V':
+            BEGIN_REPETITION();
+            V = va_arg(args, uint64_t*);
+            unpack_varint(&bp, V, *ep);
             END_REPETITION();
             break;
         default:
@@ -776,6 +839,16 @@ int struct_calcsize(const char *fmt)
         case 'x':
             BEGIN_REPETITION();
             ret += sizeof(int8_t);
+            END_REPETITION();
+            break;
+        case 'v':
+            BEGIN_REPETITION();
+            ret += 10;
+            END_REPETITION();
+            break;
+        case 'V':
+            BEGIN_REPETITION();
+            ret += 10;
             END_REPETITION();
             break;
         default:
