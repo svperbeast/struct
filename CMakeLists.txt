@@ -120,8 +120,9 @@ if (STRUCT_BUILD_TEST)
     add_executable (struct_test
                     test/struct_test.cpp
                     )
+    find_package(Threads REQUIRED)
 
-    target_link_libraries (struct_test struct gtest)
+    target_link_libraries (struct_test struct gtest ${CMAKE_THREAD_LIBS_INIT})
 
     set_target_properties (struct_test PROPERTIES
                         RUNTIME_OUTPUT_DIRECTORY
