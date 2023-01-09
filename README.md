@@ -38,6 +38,8 @@ Format | C/C++ Type         | Standard size
  `s`   | char[]             |
  `p`   | char[]             |
  `x`   | pad bytes          |
+ `v`   | go/pbuf svarint    |
+ `V`   | go/pbuf varint     |
 
 ## Pack
 

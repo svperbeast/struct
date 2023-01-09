@@ -66,6 +66,8 @@ TEST_F(Struct, CalcsizeValid)
 	EXPECT_TRUE(sizeof(strbuf) == struct_calcsize("32s"));
 	EXPECT_TRUE(sizeof(strbuf) == struct_calcsize("32p"));
 	EXPECT_TRUE(sizeof(char) == struct_calcsize("x"));
+	EXPECT_TRUE(10 == struct_calcsize("v"));
+	EXPECT_TRUE(10 == struct_calcsize("V"));
 }
 
 TEST_F(Struct, PadBytePackUnpackingValid1)
@@ -1370,6 +1372,34 @@ TEST_F(Struct, PackUnpackingStringUsingSameBuffer)
 	struct_pack(str, fmt, str);
 	struct_unpack(str, fmt, str);
 	EXPECT_STREQ(str, "test");
+}
+
+TEST_F(Struct, varint_PackUnpackingValid)
+{
+	uint64_t i = 0x1234567887654321LL;
+	uint64_t o = 0;
+	struct_pack(buf, ">V", i);
+	struct_unpack(buf, ">V", &o);
+	EXPECT_EQ(i, o);
+}
+
+TEST_F(Struct, varint_SignedPackUnpackingValid)
+{
+	int64_t i = -18014398573270210LL;
+	int64_t o;
+	struct_pack(buf, ">v", i);
+	struct_unpack(buf, ">v", &o);
+	EXPECT_EQ(i, o);
+}
+
+TEST_F(Struct, varint_MultiPackUnpackingValid)
+{
+	uint64_t i1 = 7182, i2 = 0x1234567887654321LL;
+	uint64_t o1, o2;
+	struct_pack(buf, ">2V", i1, i2);
+	struct_unpack(buf, ">2V", &o1, &o2);
+	EXPECT_EQ(i1, o1);
+	EXPECT_EQ(i2, o2);
 }
 
 } // namespace

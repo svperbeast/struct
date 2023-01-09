@@ -54,7 +54,12 @@
  *   p     | char[]             |
  *  -------+--------------------+--------------
  *   x     | pad bytes          |
- *  -------------------------------------------
+ *  -------+--------------------+--------------
+ *   v     | signed varint      |
+ *  -------+--------------------+--------------
+ *   V     | unsigned varint    |
+ *  ----------------------------+--------------
+ *
  *
  * A format character may be preceded by an integral repeat count.
  * For example, the format string '4h' means exactly the same as 'hhhh'.
