@@ -30,10 +30,12 @@ protected:
   virtual void TearDown() {}
 
   unsigned char buf[BUFSIZ];
-  static const char c;
+  static const char sc;
+  static const unsigned char uc;
 };
 
-const char Struct::c = 'a';
+const char Struct::sc = -42;
+const unsigned char Struct::uc = 42;
 
 TEST_F(Struct, memcpyCompatibilityValid)
 {
@@ -72,96 +74,96 @@ TEST_F(Struct, CalcsizeValid)
 
 TEST_F(Struct, PadBytePackUnpackingValid1)
 {
-	unsigned char o1, o2;
-	struct_pack(buf, "2x2b", c, c);
+	char o1, o2;
+	struct_pack(buf, "2x2b", sc, sc);
 	struct_unpack(buf, "2x2b", &o1, &o2);
-	EXPECT_EQ(c, o1);
-	EXPECT_EQ(c, o2);
+	EXPECT_EQ(sc, o1);
+	EXPECT_EQ(sc, o2);
 }
 
 TEST_F(Struct, PadBytePackUnpackingValid2)
 {
-	unsigned char o1, o2;
-	struct_pack(buf, "xbxb", c, c);
+	char o1, o2;
+	struct_pack(buf, "xbxb", sc, sc);
 	struct_unpack(buf, "xbxb", &o1, &o2);
-	EXPECT_EQ(c, o1);
-	EXPECT_EQ(c, o2);
+	EXPECT_EQ(sc, o1);
+	EXPECT_EQ(sc, o2);
 }
 
 TEST_F(Struct, Signed1bytePackUnpackingValid)
 {
-	unsigned char o;
-	struct_pack(buf, "b", c);
+	char o;
+	struct_pack(buf, "b", sc);
 	struct_unpack(buf, "b", &o);
-	EXPECT_EQ(c, o);
+	EXPECT_EQ(sc, o);
 }
 
 TEST_F(Struct, SignedMultiBytePackUnpackingValid)
 {
-	unsigned char o1, o2, o3, o4;
-	struct_pack(buf, "4b", c, c, c, c);
+	char o1, o2, o3, o4;
+	struct_pack(buf, "4b", sc, sc, sc, sc);
 	struct_unpack(buf, "4b", &o1, &o2, &o3, &o4);
-	EXPECT_EQ(c, o1);
-	EXPECT_EQ(c, o2);
-	EXPECT_EQ(c, o3);
-	EXPECT_EQ(c, o4);
+	EXPECT_EQ(sc, o1);
+	EXPECT_EQ(sc, o2);
+	EXPECT_EQ(sc, o3);
+	EXPECT_EQ(sc, o4);
 }
 
 TEST_F(Struct, Signed1BytePackUnpackingWithOffsetValid)
 {
 	char o;
-	struct_pack_into(1, buf, "b", c);
+	struct_pack_into(1, buf, "b", sc);
 	struct_unpack_from(1, buf, "b", &o);
-	EXPECT_EQ(c, o);
+	EXPECT_EQ(sc, o);
 }
 
 TEST_F(Struct, SignedMultiBytePackUnpackingWithOffsetValid)
 {
-	unsigned char o1, o2, o3, o4;
-	struct_pack_into(1, buf, "4b", c, c, c, c);
+	char o1, o2, o3, o4;
+	struct_pack_into(1, buf, "4b", sc, sc, sc, sc);
 	struct_unpack_from(1, buf, "4b", &o1, &o2, &o3, &o4);
-	EXPECT_EQ(c, o1);
-	EXPECT_EQ(c, o2);
-	EXPECT_EQ(c, o3);
-	EXPECT_EQ(c, o4);
+	EXPECT_EQ(sc, o1);
+	EXPECT_EQ(sc, o2);
+	EXPECT_EQ(sc, o3);
+	EXPECT_EQ(sc, o4);
 }
 
 TEST_F(Struct, SingleBytePackUnpackingValid)
 {
 	unsigned char o;
-	struct_pack(buf, "B", c);
+	struct_pack(buf, "B", uc);
 	struct_unpack(buf, "B", &o);
-	EXPECT_EQ(c, o);
+	EXPECT_EQ(uc, o);
 }
 
 TEST_F(Struct, MultiBytePackUnpackingValid)
 {
 	unsigned char o1, o2, o3, o4;
-	struct_pack(buf, "4B", c, c, c, c);
+	struct_pack(buf, "4B", uc, uc, uc, uc);
 	struct_unpack(buf, "4B", &o1, &o2, &o3, &o4);
-	EXPECT_EQ(c, o1);
-	EXPECT_EQ(c, o2);
-	EXPECT_EQ(c, o3);
-	EXPECT_EQ(c, o4);
+	EXPECT_EQ(uc, o1);
+	EXPECT_EQ(uc, o2);
+	EXPECT_EQ(uc, o3);
+	EXPECT_EQ(uc, o4);
 }
 
 TEST_F(Struct, SingleBytePackUnpackingWithOffsetValid)
 {
-	char o;
-	struct_pack_into(1, buf, "B", c);
+	unsigned char o;
+	struct_pack_into(1, buf, "B", uc);
 	struct_unpack_from(1, buf, "B", &o);
-	EXPECT_EQ(c, o);
+	EXPECT_EQ(uc, o);
 }
 
 TEST_F(Struct, MultiBytePackUnpackingWithOffsetValid)
 {
 	unsigned char o1, o2, o3, o4;
-	struct_pack_into(1, buf, "4B", c, c, c, c);
+	struct_pack_into(1, buf, "4B", uc, uc, uc, uc);
 	struct_unpack_from(1, buf, "4B", &o1, &o2, &o3, &o4);
-	EXPECT_EQ(c, o1);
-	EXPECT_EQ(c, o2);
-	EXPECT_EQ(c, o3);
-	EXPECT_EQ(c, o4);
+	EXPECT_EQ(uc, o1);
+	EXPECT_EQ(uc, o2);
+	EXPECT_EQ(uc, o3);
+	EXPECT_EQ(uc, o4);
 }
 
 TEST_F(Struct, int16_tPackUnpackingValid)
