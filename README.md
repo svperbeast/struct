@@ -74,6 +74,10 @@ struct_unpack(buf2, fmt, rstr);
 
 # Install
 
+## CMake
+
+### Compile
+
     mkdir build
     cd build
     cmake ..
@@ -83,7 +87,7 @@ struct_unpack(buf2, fmt, rstr);
 headers: `build/release/include/struct/`.
 library: `build/release/lib/`.
 
-## Test
+### Test
 
     cmake -DSTRUCT_BUILD_TEST=ON ..
     make
@@ -94,6 +98,42 @@ or run `struct_test`.
 valgrind memory check:
 
     ctest -T memcheck
+
+## Bazel
+
+### Compile
+
+    bazel build //:struct
+
+### Test
+
+    bazel test //test:struct_test
+    
+or
+
+    bazel test --test_output=all //test:struct_test
+
+you can use `git_repository` to fetch `struct` library.
+
+WORKSPACE:
+
+    load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
+    
+    git_repository(
+        name = "struct",
+        branch = "master",
+        remote = "https://github.com/svperbeast/struct",
+    )
+    
+BUILD:
+
+    cc_binary(
+        name = ...,
+        srcs = [...],
+        deps = [
+            "@struct//:struct",
+        ],
+    )
 
 # References
 
