@@ -7,6 +7,7 @@ cc_library(
         "src/struct_endian.h"
     ],
     hdrs = ["include/struct/struct.h"],
-    copts = ["-Iinclude/struct"],
+    includes = ["include/struct"],
+    strip_include_prefix = "include/struct",
     visibility = ["//visibility:public"]
 )
